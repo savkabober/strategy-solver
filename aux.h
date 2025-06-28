@@ -1,4 +1,5 @@
 #include <math.h>
+#include <stdio.h>
 using namespace std;
 
 class Point {
@@ -6,7 +7,6 @@ class Point {
         float x, y;
         Point() : x(0), y(0) {}
         Point(float x_, float y_) : x(x_), y(y_) {}
-        Point operator-(const Point& b) const { return Point(x - b.x, y - b.y); }
         float mag() const { return sqrtf(x * x + y * y); }
         Point operator+(Point b) {
             return Point(x + b.x, y + b.y);
@@ -46,29 +46,26 @@ class Point {
         float arg() {
             return atan2f(y, x);
         }
+        void print(void)
+        {
+            printf("(%f,%f)\n",x,y);
+        }
 };
-
-sign(float a) {
+Point rotate(Point p, double angle)
+{
+    return Point(
+        p.x * cos(angle) - p.y * sin(angle),
+        p.y * cos(angle) + p.x * sin(angle)
+    );
+}
+int sign(float a) {
     if (a > 0) return 1;
     if (a < 0) return -1;
     return 0;
 }
-
-Point closest_point_on_line(Point point1, Point point2, Point point, char type = 'S') {
-    float line_len = (point1 - point2).mag();
-    if (line_len == 0) {
-        return point1;
-    }
-    Point line_dir = (point1 - point2).unity();
-    Point point_vec = point - point1;
-    float dot_product = point_vec.scalar(line_dir);
-    if (dot_product <= 0 && type != 'L') {
-        return point1;
-    }
-    if (dot_product >= line_len && type == 'S') {
-        return point2;
-    }
-    return line_dir * dot_product + point1;
+double dist(Point a,Point b)
+{
+    return (a-b).mag();
 }
 
 float wind_down_angle(float angle) {
