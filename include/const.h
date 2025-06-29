@@ -13,3 +13,5 @@
 #define PEN_DX 1000
 #define PEN_DY 2000
 #define POLARITY 1
+#define FIELD_COLOR Color(52, 92, 10)
+#define FIELD_MARGIN 200

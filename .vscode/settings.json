@@ -3,6 +3,7 @@
     "files.associations": {
         "cmath": "cpp",
         "ios": "cpp",
-        "random": "cpp"
+        "random": "cpp",
+        "atomic": "cpp"
     }
 }
