@@ -4,9 +4,9 @@
 
 class Point {
     public: 
-        double x, y;
-        Point() : x(0), y(0) {}
-        Point(double x_, double y_) : x(x_), y(y_) {}
+        double x, y, isNone;
+        Point() : x(0), y(0), isNone(false) {}
+        Point(double x_, double y_, bool isNone_ = false) : x(x_), y(y_), isNone(isNone_) {}
         Point operator-(const Point& b) const { return Point(x - b.x, y - b.y); }
         double mag() const { return sqrtf(x * x + y * y); }
         Point operator+(Point b) {
@@ -91,7 +91,7 @@ Point get_line_inretsesction(
     Point line1_end,
     Point line2_start,
     Point line2_end,
-    char *types = 'SS'
+    char* types = 'SS'
     )
     {
         float delta_x1 = line1_end.x - line1_start.x;
@@ -100,7 +100,7 @@ Point get_line_inretsesction(
         float delta_y2 = line2_end.y - line2_start.y;
         float determinant = delta_y1 * delta_x2 - delta_y2 * delta_x1;
         if(determinant == 0)
-            return Point(0,0);
+            return Point(0, 0, true);
         float delta_x_start = line1_start.x - line2_start.x;
         float delta_y_start = line1_start.y - line2_start.y;
         float t1 = (delta_x_start * delta_y2 - delta_x2 * delta_y_start) / determinant;
@@ -108,16 +108,16 @@ Point get_line_inretsesction(
         float intersection_x = line1_start.x + t1 * delta_x1;
         float intersection_y = line1_start.y + t1 * delta_y1;
         Point p = Point(intersection_x, intersection_y);
-        bool first_valid = False;
-        bool second_valid = False;
-        if ((is_inf[0] == 'S' and 0 <= t1 and t1 <= 1) or (is_inf[0] == 'R' and t1 >= 0) or is_inf[0] == 'L')
-            first_valid = True;
-        if ((is_inf[1] == 'S' and 0 <= t2 and t2 <= 1) or (is_inf[1] == 'R' and t2 >= 0) or is_inf[1] == 'L')
-            second_valid = True;
+        bool first_valid = false;
+        bool second_valid = false;
+        if ((types[0] == 'S' && 0 <= t1 && t1 <= 1) || (types[0] == 'R' && t1 >= 0) || types[0] == 'L')
+            first_valid = true;
+        if ((types[1] == 'S' && 0 <= t2 && t2 <= 1) || (types[1] == 'R' && t2 >= 0) || types[1] == 'L')
+            second_valid = true;
 
-        if (first_valid and second_valid)
+        if (first_valid && second_valid)
             return p;
-        return Point(0,0);
+        return Point(0, 0, true);
     }
 
 double wind_down_angle(double angle) {
