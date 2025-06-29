@@ -9,7 +9,7 @@ CXXFLAGS = -Wall -std=c++17
 LIBS = -lsfml-graphics -lsfml-window -lsfml-system
 
 # Исходники
-SRC = main.cpp drawing.cpp
+SRC = main.cpp
 
 # Правило по умолчанию
 all: $(TARGET)

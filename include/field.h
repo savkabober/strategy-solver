@@ -1,4 +1,6 @@
+#pragma once
 #include "const.h"
+#include "aux.h"
 #include <math.h>
 class Entity
 {
@@ -102,28 +104,28 @@ class Field
         }
         ball.update(ball_pos,0,t);
     }
+    int active_allies_num()
+    {
+        int cnt;
+        for(int i;i<MAX_ROBOT_COUNT;i++)
+            if(allies[i].is_used)
+                cnt++;
+        return cnt;
+    }
     void active_allies(Robot *list)
     {
-        int j;
+        int cnt;
         for(int i;i<MAX_ROBOT_COUNT;i++)
-        {
+            if(allies[i].is_used)
+                cnt++;
+        int j;
+        for(int i; i<MAX_ROBOT_COUNT;i++)
             if(allies[i].is_used)
             {
                 list[j] = allies[i];
                 j++;
             }
-        }
+
     }
-    void active_enemies(Robot *list)
-    {
-        int j;
-        for(int i;i<MAX_ROBOT_COUNT;i++)
-        {
-            if(enemies[i].is_used)
-            {
-                list[j] = enemies[i];
-                j++;
-            }
-        }
-    }
+    
 };

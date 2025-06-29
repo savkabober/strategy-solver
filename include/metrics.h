@@ -1,4 +1,7 @@
+#pragma once
 #include "field.h"
+#include "const.h"
+#include "aux.h"
 #define ALL_TEAMS 0
 #define YELLOW 1
 #define BLUE 2

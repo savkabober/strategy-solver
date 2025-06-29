@@ -1,5 +1,5 @@
+#pragma once
 #include "aux.h"
-
 //robot movement
 #define MAX_SPEED 1500
 #define MAX_ACCELERATION 1500
