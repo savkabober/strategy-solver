@@ -1,125 +1,117 @@
-#include <time.h>
-#include <stdio.h>
-#include <math.h>
-class Complex {
-    public: 
-        float r, i;
-        Complex() : r(0), i(0) {}
-        Complex(float r_, float i_) : r(r_), i(i_) {}
-        Complex operator+(Complex b) {
-            return Complex(r + b.r, i + b.i);
+#pragma once
+#include <cmath>
+#include <complex>
+#include <iostream>
+using namespace std;
+
+int solve_one(double a, double b, complex<double> *out) {
+    if (a == 0) {
+        return 0;
+    }
+    out[0] = -b / a;
+    return 1;
+}
+
+int solve_two(double a, double b, double c, complex<double> *out) {
+    if (a == 0) {
+        return solve_one(b, c, out);;
+    }
+    static complex<double> D;
+    D = complex<double>(b * b - 4 * a * c, 0.0);
+    if (real(D) == 0) {
+        out[0] = -b / (2 * a);
+        return 1;
+    }
+    out[0] = (-b + sqrt(D)) / (2 * a);
+    out[1] = (-b - sqrt(D)) / (2 * a);
+    return 2;
+}
+
+int solve_three(double a, double b, double c, double d, complex<double> *out) {
+    if (a == 0) {
+        return solve_two(b, c, d, out);
+    }
+    static double D0, D1, alpha;
+    D0 = b * b - 3 * a * c;
+    D1 = 2 * b * b * b - 9 * a * b * c + 27 * a * a * d;
+    if (D0 == 0 && D1 == 0) {
+        out[0] = -b / (3 * a);
+        return 1;
+    }
+    static complex <double> m, high, low, e = complex<double>(-1 / 2, sqrt(3) / 2);
+    m = sqrt((D1 * D1 - 4 * D0 * D0 * D0) / 2);
+    if (abs(m) == 0) {
+        high = pow(D1, 1 / 3);
+        low = D0 / high;
+        out[0] = -(b + high * e + low / e) / (3 * a);
+        alpha = fmod(arg(low) - arg(high), 2 * M_PI);
+        if (abs(alpha) < M_PI / 4) {
+            out[1] = -(b + high + low) / (3 * a);
         }
-        Complex operator-(Complex b) {
-            return Complex(r - b.r, i - b.i);
+        else {
+            out[1] = -(b + high * e * e + low / (e * e)) / (3 * a);
         }
-        bool operator==(Complex other) {
-            return r == other.r && i == other.i;
-        }
-        bool operator!=(Complex other) {
-            return !(*this == other);
-        }
-        void print(void)
-        {
-            printf("(%f,%f)\n",r,i);
-        }
-};
-void check_same(double *roots,int roots_len,double delta=1e-10)
-{
-    int unique_roots;
-    for(int i;i<roots_len;i++)
-    {
-        for(int j;j<roots_len-i-1;i++)
-        {
-            if(fabs(roots[i]-roots[j])
+        return 2;
+    }
+    if (m == D1) {
+        high = pow((D1 + m) / 2.0, 1 / 3);
+    }
+    else {
+        high = pow((D1 - m) / 2.0, 1 / 3);
+    }
+    low = D0 / high;
+    out[0] = -(b + high + low) / (3 * a);
+    out[1] = -(b + high * e + low / e) / (3 * a);
+    out[2] = -(b + high * e * e + low / (e * e)) / (3 * a);
+    return 3;
+}
+
+int solve_four(double a, double b, double c, double d, double e, complex<double> *out) {
+    if (a == 0) {
+        return solve_three(b, c, d, e, out);
+    }
+    b /= a;
+    c /= a;
+    d /= a;
+    e /= a;
+    static double p, q, r;
+    p = (8 * c - 3 * b * b) / 8;
+    q = (b * b * b - 4 * b * c + 8 * d) / 8;
+    r = (-3 * b * b * b * b + 256 * e - 64 * b * d + 16 * b * b * c) / 256;
+    static int i, n;
+    n = solve_three(8, 8 * p, 2 * p * p - 8 * r, -q * q, out);
+    static complex<double> m, k, h, l1, l2;
+    m = complex<double> (0, 0);
+    for(i = 0; i < n; i++) {
+        if(abs(out[n]) != 0) {
+            m = out[n];
+            break;
         }
     }
+    if (abs(m) == 0) {
+        if (p == 0) {
+            out[0] = -b / 4.0;
+            return 1;
+        }
+        k = sqrt(-p / 2);
+        out[0] = -b / 4 + k;
+        out[1] = -b / 4 - k;
+        return 2;
+    }
+    h = sqrt(2.0 / m) * q;
+    k = sqrt(2.0 * m);
+    l1 = sqrt(-2.0 * p - 2.0 * m - h);
+    l2 = sqrt(-2.0 * p - 2.0 * m + h);
+    out[0] = -b / 4.0 + (k + l1) / 2.0;
+    out[1] = -b / 4.0 + (k - l1) / 2.0;
+    n = 2;
+    if (2.0 * k != l1 + l2 && 2.0 * k != l2 - l1) {
+        out[2] = -b / 4.0 + (-k + l2) / 2.0;
+        n++;
+    }
+    if (2.0 * k != -l1 - l2 && 2.0 * k != l1 - l2) {
+        out[n] = -b / 4.0 + (-k - l2) / 2.0;
+        n++;
+    }
+    return n;
 }
-/*
-def check_same(roots, delta=1e-10):
-    new_roots = []
-    for i, a in enumerate(roots):
-        flag = True
-        
-        for b in roots[i + 1:]:
-            if abs(a - b) < delta:
-                flag = False
-                break
-        if flag:
-            new_roots.append(to_zero(a))
-    return new_roots
-
-def to_zero(a, delta=1e-10):
-    root = 0
-    if(abs(a.real) > delta):
-        root += a.real
-    if(abs(a.imag) > delta):
-        root += a.imag * 1j
-    return root
-
-def solve_zero(a):
- if a == 0:
-  return [True]
- return [False]
-
-def solve_one(a, b):
- if a == 0:
-  return solve_zero(b)
- return [-b / a]
-
-def solve_two(a, b, c):
- if a == 0:
-  return solve_one(b, c)
- D = b ** 2 - 4 * a * c
- if D == 0:
-  return [-b / (2 * a)]
- return [(-b + pow(D, 1 / 2)) / (2 * a), (-b - pow(D, 1 / 2)) / (2 * a)]
-
-def solve_three(a, b, c, d):
- if a == 0:
-  return solve_two(b, c, d)
- D0 = b ** 2 - 3 * a * c
- D1 = 2 * b ** 3 - 9 * a * b * c + 27 * a ** 2 * d
- if D0 == 0 and D1 == 0:
-  return [-b / (3 * a)]
- m = pow(D1 ** 2 - 4 * D0 ** 3, 1 / 2)
- if m == D1:
-  C = pow((D1 + m) / 2, 1 / 3)
- else:
-  C = pow((D1 - m) / 2, 1 / 3)
- e = (-1 + pow(-3, 1 / 2)) / 2
- x1 = -(b + C + D0 / C) / (3 * a)
- x2 = -(b + C * e + D0 / (C * e)) / (3 * a)
- x3 = -(b + C * e ** 2 + D0 / (C * e ** 2)) / (3 * a)
- return check_same([x1, x2, x3])
-
-def solve_four(a:float, b:float, c:float, d:float, e:float):
-    if a == 0:
-        return solve_three(b, c, d, e)#saveliy glupi vibecoder
-    b /= a
-    c /= a
-    d /= a
-    e /= a
-    p = (8 * c - 3 * b ** 2) / 8
-    q = (b ** 3 - 4 * b * c + 8 * d) / 8
-    r = (-3 * b ** 4 + 256 * e - 64 * b * d + 16 * b ** 2 * c) / 256
-    ms = solve_three(8, 8 * p, 2 * p ** 2 - 8 * r, -q ** 2)
-    m = 0
-    for i in ms:
-        if i != 0:
-            m = i
-            break
-    if m == 0:
-        if p == 0:
-            return check_same([-b / 4])
-        k = pow(-2 * p, 1 / 2)
-        return check_same([-b / 4 + k / 2, -b / 4 - k / 2])
-    h = pow(2 / m, 1 / 2) * q
-    k = pow(2 * m, 1 / 2)
-    l1 = pow(-2 * p - 2 * m - h, 1 / 2)
-    l2 = pow(-2 * p - 2 * m + h, 1 / 2)
-    x1 = -b / 4 + (k + l1) / 2
-    x2 = -b / 4 + (k - l1) / 2
-    x3 = -b / 4 + (-k + l2) / 2
-    x4 = -b / 4 + (-k - l2) / 2
-    return check_same([x1, x2, x3, x4])
-    */

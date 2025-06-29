@@ -17,7 +17,8 @@ all: $(TARGET)
 # Правило сборки
 $(TARGET): $(SRC)
 	$(CXX) $(CXXFLAGS) $(SRC) -o $(TARGET) $(LIBS)
-
+init:
+	sudo apt install libsfml-dev
 # Очистка
 clean:
 	rm -f $(TARGET)
