@@ -2,6 +2,7 @@
 #include "field.h"
 #include "const.h"
 #include "aux.h"
+#include "solver.h"
 #define ALL_TEAMS 0
 #define YELLOW 1
 #define BLUE 2
@@ -23,8 +24,19 @@ float point_metrics(Waypoint *wps,int traj_len,Field field,Point tgt_point)
     {
         Waypoint wp = wps[i];
         acc = rotate(Point(MAX_ACCELERATION,0),wp.acc_angle);
+        // if((vel + acc*wp.time).mag()>MAX_SPEED)
+        //     float a =   acc.x*acc.x + acc.y*acc.y;
+        //     float b = 2*acc.x*vel.x + 2*acc.y*vel.y;
+        //     float c =   vel.x*vel.x + vel.y*vel.y - MAX_SPEED*MAX_SPEED;
+        //     complex<double> out;
+        //     solve_two(a,b,c,out);
+            
+
+        // else
+        //     vel +=acc*wp.time;
+        vel += acc*wp.time;
         pos = pos + vel*wp.time + acc*wp.time*wp.time/2;
-        vel = vel + acc*wp.time;
+        
     }
     est = dist(pos,tgt_point);
     if(est<1)//tolerance

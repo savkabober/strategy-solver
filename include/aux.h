@@ -21,6 +21,21 @@ class Point {
         Point operator/(double scalar) {
             return Point(x / scalar, y / scalar);
         }
+        Point& operator+=(const Point& other) {
+            x += other.x;
+            y += other.y;
+            return *this;
+        }
+        Point& operator-=(const Point& other) {
+            x -= other.x;
+            y -= other.y;
+            return *this;
+        }
+        Point& operator*=(const float other) {
+            x *= other;
+            y *= other;
+            return *this;
+        }
         bool operator==(Point other) {
             return x == other.x && y == other.y;
         }
@@ -71,6 +86,39 @@ Point closest_point_on_line(Point point1, Point point2, Point point, char type =
     }
     return line_dir * dot_product + point1;
 }
+Point get_line_inretsesction(
+    Point line1_start,
+    Point line1_end,
+    Point line2_start,
+    Point line2_end,
+    char *types = 'SS'
+    )
+    {
+        float delta_x1 = line1_end.x - line1_start.x;
+        float delta_y1 = line1_end.y - line1_start.y;
+        float delta_x2 = line2_end.x - line2_start.x;
+        float delta_y2 = line2_end.y - line2_start.y;
+        float determinant = delta_y1 * delta_x2 - delta_y2 * delta_x1;
+        if(determinant == 0)
+            return Point(0,0);
+        float delta_x_start = line1_start.x - line2_start.x;
+        float delta_y_start = line1_start.y - line2_start.y;
+        float t1 = (delta_x_start * delta_y2 - delta_x2 * delta_y_start) / determinant;
+        float t2 = (delta_x_start * delta_y1 - delta_x1 * delta_y_start) / determinant;
+        float intersection_x = line1_start.x + t1 * delta_x1;
+        float intersection_y = line1_start.y + t1 * delta_y1;
+        Point p = Point(intersection_x, intersection_y);
+        bool first_valid = False;
+        bool second_valid = False;
+        if ((is_inf[0] == 'S' and 0 <= t1 and t1 <= 1) or (is_inf[0] == 'R' and t1 >= 0) or is_inf[0] == 'L')
+            first_valid = True;
+        if ((is_inf[1] == 'S' and 0 <= t2 and t2 <= 1) or (is_inf[1] == 'R' and t2 >= 0) or is_inf[1] == 'L')
+            second_valid = True;
+
+        if (first_valid and second_valid)
+            return p;
+        return Point(0,0);
+    }
 
 double wind_down_angle(double angle) {
     if (fabs(angle) > 2 * M_PI) {
