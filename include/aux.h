@@ -91,7 +91,7 @@ Point get_line_inretsesction(
     Point line1_end,
     Point line2_start,
     Point line2_end,
-    char* types = 'SS'
+    char* types = "SS"
     )
     {
         float delta_x1 = line1_end.x - line1_start.x;
