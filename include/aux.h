@@ -63,7 +63,13 @@ class Point {
             return atan2f(y, x);
         }
 };
-
+Point rotate(Point p, double angle)
+{
+    return Point(
+        p.x * cos(angle) - p.y * sin(angle),
+        p.y * cos(angle) + p.x * sin(angle)
+    );
+}
 int sign(double a) {
     if (a > 0) return 1;
     if (a < 0) return -1;
@@ -91,7 +97,7 @@ Point get_line_inretsesction(
     Point line1_end,
     Point line2_start,
     Point line2_end,
-    char* types = "SS"
+    const char* types = "SS"
     )
     {
         float delta_x1 = line1_end.x - line1_start.x;

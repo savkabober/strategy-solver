@@ -19,13 +19,25 @@ class Risovalka {
         window.draw(circle);
     }
     void drawRectangle(Point pos, float width, float height, Color color) {
+        pos.y *=-1;
+        pos += Point(FIELD_DX+FIELD_MARGIN,FIELD_DY+FIELD_MARGIN);
+        pos *=scale;
+        width *=scale;
+        height *=scale;
+        
         RectangleShape rect(Vector2f(width, height));
         rect.setFillColor(color);
         rect.setPosition(pos.x, pos.y);
         window.draw(rect);
     }
     void drawLine(Point p1, Point p2, float thickness, Color color) {
-
+        p1.y *=-1;
+        p1 += Point(FIELD_DX+FIELD_MARGIN,FIELD_DY+FIELD_MARGIN);
+        p1 *=scale;
+        p2.y *=-1;
+        p2 += Point(FIELD_DX+FIELD_MARGIN,FIELD_DY+FIELD_MARGIN);
+        p2 *=scale;
+        thickness *= scale;
         float dx = p2.x - p1.x;
         float dy = p2.y - p1.y;
         float length = std::sqrt(dx * dx + dy * dy);
@@ -40,6 +52,10 @@ class Risovalka {
     }
     void update()
     {
+        drawLine(Point(-FIELD_DX,FIELD_DY),Point(FIELD_DX,FIELD_DY),20,Color(200,200,200));
+        drawLine(Point(FIELD_DX,FIELD_DY),Point(FIELD_DX,-FIELD_DY),20,Color(200,200,200));
+        drawLine(Point(FIELD_DX,-FIELD_DY),Point(-FIELD_DX,-FIELD_DY),20,Color(200,200,200));
+        drawLine(Point(-FIELD_DX,-FIELD_DY),Point(-FIELD_DX,FIELD_DY),20,Color(200,200,200));
         window.display();        
         Event event;
         while (window.pollEvent(event)) {
