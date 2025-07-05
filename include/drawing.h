@@ -1,8 +1,11 @@
 #pragma once
+
 #include <SFML/Graphics.hpp>
 #include "aux.h"
 #include "field.h"
+
 using namespace sf;
+
 class Risovalka {
     public:
     RenderWindow window;
