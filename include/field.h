@@ -36,33 +36,29 @@ public:
     double angle_vel;
     double angle_acc;
     double R = ROBOT_R;
-    double _lifetime, _cur_time;
+    double _lifetime;
     Robot(Point pos_, double angle_) : Ball(pos_), angle(angle_) {}
     Robot() : Ball(Point(GRAVEYARD_POS_X, 0)), angle(0.0) {}
-    void update(Point new_pos, double new_angle)
+    void update(Point new_pos, double new_angle, double t)
     {
         static double dt;
-        dt = _cur_time - _last_update;
+        dt = t - _last_update;
         acc = ((new_pos - pos) / dt - vel) / dt;
         vel = (new_pos - pos) / dt;
         pos = new_pos;
         angle_acc = ((new_angle - angle) / dt - angle_vel) / dt;
         angle_vel = (new_angle - angle) / dt;
         angle = new_angle;
-        _last_update = _cur_time;
-    }
-
-    void process(double t) {
-        if (!(_last_update == _cur_time ^ is_used)) {
-            _lifetime = _cur_time;
+        if (!((new_pos == Point(GRAVEYARD_POS_X, 0)) ^ is_used)) {
+            _lifetime = t;
         }
-        if (_lifetime >= TIME_TO_BORN && !is_used) {
+        if (_lifetime > TIME_TO_BORN) {
             is_used = true;
         }
-        else if (_lifetime >= TIME_TO_DIE && is_used) {
+        else if (_lifetime > TIME_TO_DIE) {
             is_used = false;
         }
-        _cur_time = t;
+        _last_update = t;
     }
 };
 
@@ -101,6 +97,7 @@ public:
         hull[2] = Point(-field_dx, -field_dy);
         hull[3] = Point(-field_dx, field_dy);
     }
+
     void update_all(Point *ally_robots_poses, double *ally_robot_angles, Point *enemy_robots_poses, double *enemy_robots_angles, Point ball_pos, double t)
     {
         static int i;
