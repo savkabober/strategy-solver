@@ -139,7 +139,7 @@ struct RbtMove
                 n_rts = solve_four(ak, bk, ck, dk, ek, complex_roots);
                 for (k = 0; k < n_rts; k++)
                 {
-                    if (abs(imag(complex_roots[k])) < 1e-10)
+                    if (abs(imag(complex_roots[k])) < EPSILON)
                     {
                         real_rt = real(complex_roots[k]);
                         if (real_rt >= 0 && real_rt < t_move[i + 1] - t_move[i])
@@ -239,7 +239,7 @@ struct RbtMove
                 k = -1;
                 for (j = 0; j < 3; j++)
                 {
-                    for (k++; k < size - 1 && roots[i][k + 1] - roots[i][k] < 1e-10; k++)
+                    for (k++; k < size - 1 && roots[i][k + 1] - roots[i][k] < EPSILON; k++)
                         ;
                     poses[j] = k;
                 }
@@ -278,7 +278,7 @@ struct RbtMove
                 }
                 for (j = poses[2]; j < size - 1;)
                 {
-                    for (j++; j < size - 1 && roots[i][j + 1] - roots[i][j] < 1e-10; j++)
+                    for (j++; j < size - 1 && roots[i][j + 1] - roots[i][j] < EPSILON; j++)
                         ;
                     poses[0] = poses[1];
                     poses[1] = poses[2];

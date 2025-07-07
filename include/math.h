@@ -277,10 +277,6 @@ int solve_two(double a, double b, double c, complex<double> *out)
     }
     static complex<double> D;
     D = complex<double>(b * b - 4 * a * c, 0.0);
-    // if (real(D) == 0) {
-    //     out[0] = -b / (2 * a);
-    //     return 1;
-    // }
     out[0] = (-b + sqrt(D)) / (2 * a);
     out[1] = (-b - sqrt(D)) / (2 * a);
     return 2;
@@ -302,7 +298,7 @@ int solve_three(double a, double b, double c, double d, complex<double> *out)
     }
     static complex<double> m, high, low, e = complex<double>(-1 / 2.0, sqrt(3.0) / 2.0);
     m = sqrt(complex<double>(D1 * D1 - 4.0 * D0 * D0 * D0, 0));
-    if (fabs(m) < 1e-10)
+    if (fabs(m) < EPSILON)
     {
         high = pow(D1, 1 / 3);
         low = D0 / high;
@@ -322,7 +318,7 @@ int solve_three(double a, double b, double c, double d, complex<double> *out)
         }
         return 2;
     }
-    if (fabs(m - D1) < 1e-10)
+    if (fabs(m - D1) < EPSILON)
     {
         high = pow((D1 + m) / 2.0, 1.0 / 3.0);
     }
@@ -357,7 +353,7 @@ int solve_four(double a, double b, double c, double d, double e, complex<double>
     m = complex<double>(0, 0);
     for (i = 0; i < n; i++)
     {
-        if (fabs(out[i]) > 1e-10)
+        if (fabs(out[i]) > EPSILON)
         {
             m = out[i];
             break;
@@ -382,12 +378,12 @@ int solve_four(double a, double b, double c, double d, double e, complex<double>
     out[0] = -b / 4.0 + (k + l1) / 2.0;
     out[1] = -b / 4.0 + (k - l1) / 2.0;
     n = 2;
-    if (fabs(2.0 * k - l1 - l2) > 1e-10 && fabs(2.0 * k + l1 - l2) > 1e-10)
+    if (fabs(2.0 * k - l1 - l2) > EPSILON && fabs(2.0 * k + l1 - l2) > EPSILON)
     {
         out[2] = -b / 4.0 + (-k + l2) / 2.0;
         n++;
     }
-    if (fabs(2.0 * k + l1 + l2) > 1e-10 && fabs(2.0 * k + l2 - l1) > 1e-10)
+    if (fabs(2.0 * k + l1 + l2) > EPSILON && fabs(2.0 * k + l2 - l1) > EPSILON)
     {
         out[n] = -b / 4.0 + (-k - l2) / 2.0;
         n++;
@@ -412,7 +408,7 @@ Point closest_point_on_parabola(Point x, Point r0, Point v0, Point a, double t_m
     n_rls = 0;
     for (i = 0; i < n_rts; i++)
     {
-        if (abs(imag(roots[i])) < 1e-10)
+        if (abs(imag(roots[i])) < EPSILON)
         {
             real_roots[n_rls] = real(roots[i]);
             n_rls++;

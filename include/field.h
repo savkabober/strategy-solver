@@ -64,19 +64,27 @@ public:
 
 struct Goal
 {
-    Point center, up, down, frw_up, frw_down, frw_center;
-    Point hull[4];
-    Goal(double goal_dx, double pen_dx, double pen_dy, int polarity) : center(goal_dx * polarity, 0),
-                                                                    up(goal_dx * polarity, pen_dy / 2),
-                                                                    down(goal_dx * polarity, -pen_dy / 2),
-                                                                    frw_up(goal_dx * polarity - pen_dx * polarity, pen_dy),
-                                                                    frw_down(goal_dx * polarity - pen_dx * polarity, -pen_dy),
-                                                                    frw_center(goal_dx * polarity - pen_dx * polarity, 0)
+    Point center, up, down, frw_up, frw_down, frw_center, center_up, center_down;
+    Point hull[5], big_hull[5]; 
+    Goal(int polarity) : center(FIELD_DX / 2.0 * polarity, 0),
+                                                                    up(FIELD_DX / 2.0 * polarity, ZONE_DY / 2.0),
+                                                                    down(FIELD_DX / 2.0 * polarity, -ZONE_DY / 2.0),
+                                                                    frw_up(FIELD_DX / 2.0 * polarity - ZONE_DX * polarity, ZONE_DY / 2.0),
+                                                                    frw_down(FIELD_DX / 2.0 * polarity - ZONE_DX * polarity, -ZONE_DY / 2.0),
+                                                                    frw_center(FIELD_DX / 2.0 * polarity - ZONE_DX * polarity, 0),
+                                                                    center_up(FIELD_DX / 2.0 * polarity, GOAL_DY * polarity / 2.0),
+                                                                    center_down(FIELD_DX / 2.0 * polarity, -GOAL_DY * polarity / 2.0)
     {
-        hull[0] = this->up;
-        hull[1] = this->down;
+        hull[0] = this->center_up;
+        hull[1] = this->frw_up;
         hull[2] = this->frw_down;
-        hull[3] = this->frw_up;
+        hull[3] = this->center_down;
+        hull[4] = Point(INF * polarity, 0);
+        big_hull[0] = hull[0] + Point(0, ROBOT_R * polarity);
+        big_hull[1] = hull[1] + Point(-ROBOT_R * polarity, ROBOT_R * polarity);
+        big_hull[2] = hull[2] + Point(-ROBOT_R * polarity, -ROBOT_R * polarity);
+        big_hull[3] = hull[3] + Point(0, -ROBOT_R * polarity);
+        big_hull[4] = hull[4];
     }
 };
 
@@ -84,18 +92,18 @@ class Field
 {
 public:
     Goal ally_goal, enemy_goal;
-    Point hull[4]; // EBANIE KITAYCI (a chto ne tak to? i stav probeli pozhaluysta)
+    Point hull[4];
     Robot allies[MAX_ROBOT_COUNT], enemies[MAX_ROBOT_COUNT];
     Robot active_allies[MAX_ROBOT_COUNT], active_enemies[MAX_ROBOT_COUNT];
     int n_active_allies, n_active_enemies;
     Ball ball;
-    Field(double field_dx, double field_dy, double pen_dx, double pen_dy, int polarity) : ally_goal(field_dx, pen_dx, pen_dy, polarity),
-                                                                                      enemy_goal(field_dx, pen_dx, pen_dy, -polarity)
+    Field(int polarity) : ally_goal(polarity),
+                                                                                      enemy_goal(-polarity)
     {
-        hull[0] = Point(field_dx, field_dy);
-        hull[1] = Point(field_dx, -field_dy);
-        hull[2] = Point(-field_dx, -field_dy);
-        hull[3] = Point(-field_dx, field_dy);
+        hull[0] = Point(FIELD_DX, FIELD_DY);
+        hull[1] = Point(FIELD_DX, -FIELD_DY);
+        hull[2] = Point(-FIELD_DX, -FIELD_DY);
+        hull[3] = Point(-FIELD_DX, FIELD_DY);
     }
 
     void update_all(Point *ally_robots_poses, double *ally_robot_angles, Point *enemy_robots_poses, double *enemy_robots_angles, Point ball_pos, double t)

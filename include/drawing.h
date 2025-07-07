@@ -6,19 +6,21 @@
 
 using namespace sf;
 
-class Risovalka {
-    public:
+class Drawer
+{
+public:
     RenderWindow window;
     double scale = 0.1;
-    Risovalka(int w, int h): window(VideoMode(w,h),"venom") {}
-    void drawCircle(Point pos, double radius, Color color) {
-        pos.y *=-1;
-        pos += Point(FIELD_DX+FIELD_MARGIN,FIELD_DY+FIELD_MARGIN);
-        pos *=scale;
-        radius *=scale;
+    Drawer(int w, int h) : window(VideoMode(w, h), "venom") {}
+    void drawCircle(Point pos, double radius, Color color)
+    {
+        pos.y *= -1;
+        pos += Point(FIELD_DX / 2.0 + FIELD_MARGIN, FIELD_DY / 2.0 + FIELD_MARGIN);
+        pos *= scale;
+        radius *= scale;
         CircleShape circle(radius);
         circle.setFillColor(color);
-        circle.setPosition(pos.x-radius, pos.y-radius);
+        circle.setPosition(pos.x - radius, pos.y - radius);
         window.draw(circle);
     }
     void drawRectangle(Point pos, float width, float height, Color color) {
@@ -61,11 +63,11 @@ class Risovalka {
         drawLine(Point(-FIELD_DX,-FIELD_DY),Point(-FIELD_DX,FIELD_DY),20,Color(200,200,200));
         window.display();        
         Event event;
-        while (window.pollEvent(event)) {
+        while (window.pollEvent(event))
+        {
             if (event.type == Event::Closed)
                 window.close();
         }
         window.clear(FIELD_COLOR);
     }
 };
-
