@@ -2,7 +2,7 @@
 
 #include "field.h"
 #include "const.h"
-#include "maths.h"
+#include "math.h"
 #include <complex>
 #include <vector>
 #include "quicksort.h"

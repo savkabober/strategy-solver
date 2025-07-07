@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
-#include "maths.h"
+#include "math.h"
 #include "field.h"
 
 using namespace sf;

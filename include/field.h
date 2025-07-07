@@ -1,12 +1,12 @@
 #pragma once
 
 #include "const.h"
-#include "maths.h"
+#include "math.h"
 #include <cmath>
 
 using namespace std;
 
-class Entity
+class Ball
 {
 public:
     Point pos;
@@ -14,19 +14,19 @@ public:
     Point acc;
     double R = BALL_R;
     double _last_update;
-    Entity(Point pos_) : pos(pos_.x, pos_.y) {}
-    Entity() : pos(0.0, 0.0) {}
+    Ball(Point pos_) : pos(pos_.x, pos_.y) {}
+    Ball() : pos(0.0, 0.0) {}
     void update(Point new_pos, double t)
     {
-        double dt = t - _last_update;
+        static double dt;
+        dt = t - _last_update;
         acc = ((new_pos - pos) / dt - vel) / dt;
         vel = (new_pos - pos) / dt;
         pos = new_pos;
-        _last_update = t;
     }
 };
 
-class Robot : public Entity
+class Robot : public Ball
 {
 public:
     int color;
@@ -36,28 +36,38 @@ public:
     double angle_vel;
     double angle_acc;
     double R = ROBOT_R;
-    Robot(Point pos_, double angle_) : Entity(pos_), angle(angle_) {}
-    Robot() : Entity(Point(GRAVEYARD_POS_X, 0)), angle(0.0) {}
-    void update(Point new_pos, double new_angle, double t)
+    double _lifetime, _cur_time;
+    Robot(Point pos_, double angle_) : Ball(pos_), angle(angle_) {}
+    Robot() : Ball(Point(GRAVEYARD_POS_X, 0)), angle(0.0) {}
+    void update(Point new_pos, double new_angle)
     {
-        double dt = t - _last_update;
+        static double dt;
+        dt = _cur_time - _last_update;
         acc = ((new_pos - pos) / dt - vel) / dt;
         vel = (new_pos - pos) / dt;
         pos = new_pos;
         angle_acc = ((new_angle - angle) / dt - angle_vel) / dt;
         angle_vel = (new_angle - angle) / dt;
         angle = new_angle;
-        if (new_pos != Point(GRAVEYARD_POS_X, 0))
+        _last_update = _cur_time;
+    }
+
+    void process(double t) {
+        if (!(_last_update == _cur_time ^ is_used)) {
+            _lifetime = _cur_time;
+        }
+        if (_lifetime >= TIME_TO_BORN && !is_used) {
             is_used = true;
-        else
+        }
+        else if (_lifetime >= TIME_TO_DIE && is_used) {
             is_used = false;
-        _last_update = t;
+        }
+        _cur_time = t;
     }
 };
 
-class Goal
+struct Goal
 {
-public:
     Point center, up, down, frw_up, frw_down, frw_center;
     Point hull[4];
     Goal(double goal_dx, double pen_dx, double pen_dy, int polarity) : center(goal_dx * polarity, 0),
@@ -82,7 +92,7 @@ public:
     Robot allies[MAX_ROBOT_COUNT], enemies[MAX_ROBOT_COUNT];
     Robot active_allies[MAX_ROBOT_COUNT], active_enemies[MAX_ROBOT_COUNT];
     int n_active_allies, n_active_enemies;
-    Entity ball;
+    Ball ball;
     Field(double field_dx, double field_dy, double pen_dx, double pen_dy, int polarity) : ally_goal(field_dx, pen_dx, pen_dy, polarity),
                                                                                       enemy_goal(field_dx, pen_dx, pen_dy, -polarity)
     {
