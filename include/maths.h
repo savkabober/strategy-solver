@@ -15,8 +15,10 @@ public:
     bool is_none;
     Point() : x(0), y(0), is_none(false) {}
     Point(double x_, double y_, bool is_none_ = false) : x(x_), y(y_), is_none(is_none_) {}
-    Point operator-(const Point &b) const { return Point(x - b.x, y - b.y); }
-    double mag() const { return sqrtf(x * x + y * y); }
+    Point operator-()
+    {
+        return Point(-x, -y);
+    }
     Point operator+(Point b)
     {
         return Point(x + b.x, y + b.y);
@@ -77,18 +79,18 @@ public:
 
     double mag()
     {
-        return sqrtf(x * x + y * y);
+        return sqrt(x * x + y * y);
     }
 
     Point unity()
     {
         double len = mag();
-        return len > 0.0f ? Point(x / len, y / len) : Point(0.0f, 0.0f);
+        return len > 0.0f ? Point(x / len, y / len) : Point(0.0, 0.0);
     }
 
     double arg()
     {
-        return atan2f(y, x);
+        return atan2(y, x);
     }
 
     Point rotate(double ang)
@@ -152,19 +154,19 @@ Point get_line_inretsesction(
     Point line2_end,
     string types = "SS")
 {
-    float delta_x1 = line1_end.x - line1_start.x;
-    float delta_y1 = line1_end.y - line1_start.y;
-    float delta_x2 = line2_end.x - line2_start.x;
-    float delta_y2 = line2_end.y - line2_start.y;
-    float determinant = delta_y1 * delta_x2 - delta_y2 * delta_x1;
+    double delta_x1 = line1_end.x - line1_start.x;
+    double delta_y1 = line1_end.y - line1_start.y;
+    double delta_x2 = line2_end.x - line2_start.x;
+    double delta_y2 = line2_end.y - line2_start.y;
+    double determinant = delta_y1 * delta_x2 - delta_y2 * delta_x1;
     if (determinant == 0)
         return Point(0, 0, true);
-    float delta_x_start = line1_start.x - line2_start.x;
-    float delta_y_start = line1_start.y - line2_start.y;
-    float t1 = (delta_x_start * delta_y2 - delta_x2 * delta_y_start) / determinant;
-    float t2 = (delta_x_start * delta_y1 - delta_x1 * delta_y_start) / determinant;
-    float intersection_x = line1_start.x + t1 * delta_x1;
-    float intersection_y = line1_start.y + t1 * delta_y1;
+    double delta_x_start = line1_start.x - line2_start.x;
+    double delta_y_start = line1_start.y - line2_start.y;
+    double t1 = (delta_x_start * delta_y2 - delta_x2 * delta_y_start) / determinant;
+    double t2 = (delta_x_start * delta_y1 - delta_x1 * delta_y_start) / determinant;
+    double intersection_x = line1_start.x + t1 * delta_x1;
+    double intersection_y = line1_start.y + t1 * delta_y1;
     Point p = Point(intersection_x, intersection_y);
     bool first_valid = false;
     bool second_valid = false;
@@ -380,7 +382,7 @@ int solve_four(double a, double b, double c, double d, double e, complex<double>
     out[0] = -b / 4.0 + (k + l1) / 2.0;
     out[1] = -b / 4.0 + (k - l1) / 2.0;
     n = 2;
-    if (fabs(2.0 * k - l1 - l2) > 1e-10 && fabs(2.0 * k + L1 - L2) > 1e-10)
+    if (fabs(2.0 * k - l1 - l2) > 1e-10 && fabs(2.0 * k + l1 - l2) > 1e-10)
     {
         out[2] = -b / 4.0 + (-k + l2) / 2.0;
         n++;

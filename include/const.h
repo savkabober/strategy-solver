@@ -6,8 +6,8 @@
 //hz
 #define MAX_ROBOT_COUNT 16
 #define MAX_SOLVER_DEGREE 10
-#define WAY_IN 1
-#define WAY_OUT 2
+#define TIME_TO_BORN 0.5
+#define TIME_TO_DIE 1.5
 //geometry
 #define ROBOT_R 100.0
 #define BALL_R 40.0

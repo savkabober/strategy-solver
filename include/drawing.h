@@ -1,7 +1,7 @@
 #pragma once
 
 #include <SFML/Graphics.hpp>
-#include "aux.h"
+#include "maths.h"
 #include "field.h"
 
 using namespace sf;
@@ -9,9 +9,9 @@ using namespace sf;
 class Risovalka {
     public:
     RenderWindow window;
-    float scale = 0.1;
+    double scale = 0.1;
     Risovalka(int w, int h): window(VideoMode(w,h),"venom") {}
-    void drawCircle(Point pos, float radius, Color color) {
+    void drawCircle(Point pos, double radius, Color color) {
         pos.y *=-1;
         pos += Point(FIELD_DX+FIELD_MARGIN,FIELD_DY+FIELD_MARGIN);
         pos *=scale;

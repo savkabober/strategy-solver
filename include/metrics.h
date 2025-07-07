@@ -2,7 +2,7 @@
 
 #include "field.h"
 #include "const.h"
-#include "aux.h"
+#include "maths.h"
 #include <complex>
 #include <vector>
 #include "quicksort.h"
@@ -98,15 +98,23 @@ struct RbtMove
         static double acc_time, min_t, ak, bk, ck, dk, ek, real_rt;
         static Point r, v, a, rp;
         static complex<double> complex_roots[4];
-        static int n_new, n_rts;
-        acc_time = 2.0 * a_move[n_move].unity().scalar(v_move[n_move]) / MAX_ACCELERATION;
-        min_t = fmin(acc_time, t);
-        a_move[n_move] = Point(MAX_ACCELERATION, 0).rotate(angle);
-        t_move[n_move + 1] = t_move[n_move] + min_t;
-        v_move[n_move + 1] = v_move[n_move] + a_move[n_move] * min_t;
-        r_move[n_move + 1] = r_move[n_move] + (v_move[n_move] + v_move[n_move + 1]) * min_t / 2.0;
-        n_move++;
-        n_new = 1;
+        static int n_st, n_rts;
+        if (t == 0)
+        {
+            return;
+        }
+        acc_time = 2.0 * a_move[n_move].unity().scalar(-v_move[n_move]) / MAX_ACCELERATION;
+        acc_time = fmax(acc_time, 0.0);
+        n_st = n_move;
+        if (acc_time != 0.0)
+        {
+            min_t = fmin(acc_time, t);
+            a_move[n_move] = Point(MAX_ACCELERATION, 0).rotate(angle);
+            t_move[n_move + 1] = t_move[n_move] + min_t;
+            v_move[n_move + 1] = v_move[n_move] + a_move[n_move] * min_t;
+            r_move[n_move + 1] = r_move[n_move] + (v_move[n_move] + v_move[n_move + 1]) * min_t / 2.0;
+            n_move++;
+        }
         if (t > acc_time)
         {
             a_move[n_move] = Point(0, 0);
@@ -114,9 +122,8 @@ struct RbtMove
             v_move[n_move + 1] = v_move[n_move];
             r_move[n_move + 1] = r_move[n_move] + v_move[n_move + 1] * (t - acc_time);
             n_move++;
-            n_new = 2;
         }
-        for (i = n_move - n_new; i < n_move; i++)
+        for (i = n_st; i < n_move; i++)
         {
             r = r_move[i];
             v = v_move[i];
@@ -137,7 +144,7 @@ struct RbtMove
                         real_rt = real(complex_roots[k]);
                         if (real_rt >= 0 && real_rt < t_move[i + 1] - t_move[i])
                         {
-                            roots.push_back(real_rt + t_move[i]);
+                            roots[j].push_back(real_rt + t_move[i]);
                         }
                     }
                 }
@@ -145,15 +152,19 @@ struct RbtMove
         }
     }
 
-    int get_t_idx(double t) {
-        if (t < 0 || t > t_move[n_move]) {
+    int get_t_idx(double t)
+    {
+        if (t < 0 || t > t_move[n_move])
+        {
             return -1;
         }
-        if (t == 0) {
+        if (t == 0)
+        {
             return 0;
         }
         static int idx;
-        for (idx = 1; t_move[idx] < t; idx++);
+        for (idx = 1; t_move[idx] < t; idx++)
+            ;
         return idx - 1;
     }
 
@@ -161,42 +172,53 @@ struct RbtMove
     {
         static double dt;
         static int idx;
-        if (idx_ >= 0 && idx_ < n_move) {
+        if (idx_ >= 0 && idx_ < n_move)
+        {
             idx = idx_;
         }
-        else {
+        else
+        {
             idx = get_t_idx(t);
         }
-        if (idx == -1) {
+        if (idx == -1)
+        {
             return Point(0, 0, true);
         }
         dt = t - t_move[idx];
         return r_move[idx] + v_move[idx] * dt + a_move[idx] * dt * dt / 2.0;
     }
 
-    Point get_current_vel(double t, int idx_ = -1) {
+    Point get_current_vel(double t, int idx_ = -1)
+    {
         static int idx;
-        if (idx_ >= 0 && idx_ < n_move) {
+        if (idx_ >= 0 && idx_ < n_move)
+        {
             idx = idx_;
         }
-        else {
+        else
+        {
             idx = get_t_idx(t);
         }
-        if (idx == -1) {
+        if (idx == -1)
+        {
             return Point(0, 0, true);
         }
         return v_move[idx] + a_move[idx] * (t - t_move[idx]);
     }
 
-    Point get_current_acc(double t, int idx_ = -1) {
+    Point get_current_acc(double t, int idx_ = -1)
+    {
         static int idx;
-        if (idx_ >= 0 && idx_ < n_move) {
+        if (idx_ >= 0 && idx_ < n_move)
+        {
             idx = idx_;
         }
-        else {
+        else
+        {
             idx = get_t_idx(t);
         }
-        if (idx == -1) {
+        if (idx == -1)
+        {
             return Point(0, 0, true);
         }
         return a_move[idx];
@@ -205,7 +227,7 @@ struct RbtMove
     void filter_roots()
     {
         static int poses[3], size;
-        static float average_dist;
+        static double average_dist;
         static bool gone_in;
         for (i = 0; i < n_objects; i++)
         {
@@ -234,7 +256,7 @@ struct RbtMove
                 {
                     gone_in = false;
                 }
-                if (poses[2] != size)
+                if (poses[2] < size)
                 {
                     average_dist = (get_current_pos((roots[i][poses[0]] + roots[i][poses[1]]) / 2.0) - objects[i].c).mag() - ROBOT_R - objects[i].r;
                     if (average_dist * ((get_current_pos((roots[i][poses[1]] + roots[i][poses[2]]) / 2.0) - objects[i].c).mag() - ROBOT_R - objects[i].r) < 0)
@@ -245,11 +267,11 @@ struct RbtMove
                             {
                                 grp_rts[group[i]].push_back(0);
                             }
-                            grp_rts[group[i]].push_back[-roots[i][poses[1]]];
+                            grp_rts[group[i]].push_back(-roots[i][poses[1]]);
                         }
                         else
                         {
-                            grp_rts[group[i]].push_back[roots[i][poses[1]]];
+                            grp_rts[group[i]].push_back(roots[i][poses[1]]);
                         }
                     }
                     gone_in = true;
@@ -266,11 +288,11 @@ struct RbtMove
                     {
                         if (average_dist < 0)
                         {
-                            grp_rts[group[i]].push_back[-roots[i][poses[1]]];
+                            grp_rts[group[i]].push_back(-roots[i][poses[1]]);
                         }
                         else
                         {
-                            grp_rts[group[i]].push_back[roots[i][poses[1]]];
+                            grp_rts[group[i]].push_back(roots[i][poses[1]]);
                         }
                     }
                 }
@@ -286,54 +308,68 @@ struct RbtMove
             abs_sort(grp_rts[i], 0, grp_rts[i].size() - 1);
         }
     }
-    
-    double solve_metrics() {
-        static int enter_idx, group_score, mv_idx[3];
+
+    double solve_metrics()
+    {
+        static int enter_idx, group_score, mv_idx[3], grp_size;
         static Point closest, start_vals[3];
         static double minVal, val, metrics[4];
         metrics[0] = (r_move[n_move] - target_pos).mag() / MAX_SPEED;
-        if (metrics[0] < 0.05) {
+        if (metrics[0] < 0.05)
+        {
             metrics[0] = 0;
         }
         metrics[1] = (v_move[n_move] - target_vel).mag() / MAX_ACCELERATION;
-        if (metrics[1] < 0.05) {
+        if (metrics[1] < 0.05)
+        {
             metrics[1] = 0;
         }
         metrics[2] = 0;
-        for (i = 0; i < n_groups; i++) {
+        for (i = 0; i < n_groups; i++)
+        {
             enter_idx = 0;
             group_score = 1;
-            for (j = 1; j < grp_rts[i].size(); j++) {
-                if (-grp_rts[i][j] >= 0) {
+            grp_size = grp_rts[i].size();
+            for (j = 1; j < grp_size; j++)
+            {
+                if (-grp_rts[i][j] >= 0)
+                {
                     group_score++;
                 }
-                else {
+                else
+                {
                     group_score--;
                 }
-                if (group_score == 0) {
+                if (group_score == 0)
+                {
                     mv_idx[0] = get_t_idx(grp_rts[i][enter_idx]) + 1;
                     mv_idx[1] = get_t_idx(-grp_rts[i][j]);
                     start_vals[0] = get_current_pos(grp_rts[i][enter_idx], mv_idx[0] - 1);
                     start_vals[1] = get_current_vel(grp_rts[i][enter_idx], mv_idx[0] - 1);
                     start_vals[2] = get_current_acc(grp_rts[i][enter_idx], mv_idx[0] - 1);
-                    if (mv_idx[1] < mv_idx[0]) {
+                    if (mv_idx[1] < mv_idx[0])
+                    {
                         closest = closest_point_on_parabola(m_center[i], start_vals[0], start_vals[1], start_vals[2], 0, -grp_rts[i][j] - grp_rts[i][enter_idx]);
                         minVal = (closest - m_center[i]).mag();
                     }
-                    else {
+                    else
+                    {
                         k = mv_idx[0];
                         closest = closest_point_on_parabola(m_center[i], start_vals[0], start_vals[1], start_vals[2], 0, t_move[mv_idx[0]] - grp_rts[i][enter_idx]);
                         minVal = (closest - m_center[i]).mag();
-                        for (k; k < mv_idx[1]; k++) {
+                        for (; k < mv_idx[1]; k++)
+                        {
                             closest = closest_point_on_parabola(m_center[i], r_move[k], v_move[k], a_move[k], 0, t_move[k + 1] - t_move[k]);
                             val = (closest - m_center[i]).mag();
-                            if (val < minVal) {
+                            if (val < minVal)
+                            {
                                 minVal = val;
                             }
                         }
                         closest = closest_point_on_parabola(m_center[i], r_move[k], v_move[k], a_move[k], 0, -grp_rts[i][j] - t_move[k]);
                         val = (closest - m_center[i]).mag();
-                        if (val < minVal) {
+                        if (val < minVal)
+                        {
                             minVal = val;
                         }
                     }
