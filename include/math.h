@@ -9,6 +9,8 @@
 
 using namespace std;
 
+#define SQUARE(x) ((x) * (x))
+
 class Point
 {
 public:
@@ -36,13 +38,13 @@ public:
     {
         return Point(x / scalar, y / scalar);
     }
-    Point &operator+=(const Point &other)
+    Point &operator+=(const Point other)
     {
         x += other.x;
         y += other.y;
         return *this;
     }
-    Point &operator-=(const Point &other)
+    Point &operator-=(const Point other)
     {
         x -= other.x;
         y -= other.y;
@@ -62,7 +64,7 @@ public:
     }
     bool operator==(Point other)
     {
-        return x == other.x && y == other.y;
+        return (*this - other).mag() < EPSILON;
     }
     bool operator!=(Point other)
     {
@@ -78,9 +80,14 @@ public:
         return x * b.y - y * b.x;
     }
 
+    double mag2()
+    {
+        return x * x + y * y;
+    }
+
     double mag()
     {
-        return sqrt(x * x + y * y);
+        return sqrt(mag2());
     }
 
     Point unity()
@@ -100,6 +107,14 @@ public:
         return Point(x * c - y * s, y * c + x * s);
     }
 };
+
+ostream &operator<<(ostream &os, const Point &point)
+{
+    os << "x = " << point.x << ", y = " << point.y;
+    return os;
+}
+
+Point GRAVEYARD_POS = Point(GRAVEYARD_POS_X, 0);
 
 class Object
 {
@@ -396,13 +411,13 @@ Point closest_point_on_parabola(Point x, Point r0, Point v0, Point a, double t_m
 {
     static double ak, bk, ck, dk, real_roots[3], best, answ, value;
     static int n_rls, n_rts, i;
-    if (a.mag() == 0 && v0.mag() == 0)
+    if (a.mag2() == 0 && v0.mag2() == 0)
     {
         return r0;
     }
-    ak = a.mag() * a.mag() / 2.0;
+    ak = a.mag2() / 2.0;
     bk = 3.0 / 2.0 * a.scalar(v0);
-    ck = v0.mag() * v0.mag() + a.scalar(r0 - x);
+    ck = v0.mag2() + a.scalar(r0 - x);
     dk = v0.scalar(r0 - x);
     complex<double> roots[3];
     n_rts = solve_three(ak, bk, ck, dk, roots);
@@ -420,7 +435,7 @@ Point closest_point_on_parabola(Point x, Point r0, Point v0, Point a, double t_m
     {
         if (real_roots[i] >= t_min && real_roots[i] <= t_max)
         {
-            value = (r0 + v0 * real_roots[i] + a * real_roots[i] * real_roots[i] / 2.0 - x).mag();
+            value = (r0 + v0 * real_roots[i] + a * real_roots[i] * real_roots[i] / 2.0 - x).mag2();
             if (best < 0 || value < best)
             {
                 best = value;
@@ -428,13 +443,13 @@ Point closest_point_on_parabola(Point x, Point r0, Point v0, Point a, double t_m
             }
         }
     }
-    value = (r0 + v0 * t_min + a * t_min * t_min / 2.0 - x).mag();
+    value = (r0 + v0 * t_min + a * t_min * t_min / 2.0 - x).mag2();
     if (best < 0 || value < best)
     {
         best = value;
         answ = t_min;
     }
-    value = (r0 + v0 * t_max + a * t_max * t_max / 2.0 - x).mag();
+    value = (r0 + v0 * t_max + a * t_max * t_max / 2.0 - x).mag2();
     if (best < 0 || value < best)
     {
         best = value;

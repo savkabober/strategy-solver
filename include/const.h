@@ -2,7 +2,7 @@
 
 //robot movement
 #define MAX_SPEED 1500
-#define MAX_ACCELERATION 1500
+#define MAX_ACC 1500
 //idk
 #define MAX_ROBOT_COUNT 16
 #define MAX_SOLVER_DEGREE 10
@@ -22,13 +22,15 @@
 #define FIELD_MARGIN 200
 //field info
 #define ALL_TEAMS 0
-#define YELLOW 1
-#define BLUE 2
+#define BLUE 1
+#define YELLOW 2
+#define COLOR 1
 #define POLARITY 1 //sign of x coordinate of our goal
 //metrics
 #define DIST_K 1e6
 #define VEL_K 1e4
 #define OBSTACLE_K 1e2
+#define POW_BASE 1.003
 //some math constants
 #define EPSILON 1e-10
-#define INF 1e10
+#define INF 1e30

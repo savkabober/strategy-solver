@@ -9,7 +9,7 @@ CXXFLAGS = -Wall -std=c++17
 LIBS = -lsfml-graphics -lsfml-window -lsfml-system
 
 # Исходники
-SRC = include/optimizer2.cpp
+SRC = main.cpp
 
 # Правило по умолчанию
 all: $(TARGET)

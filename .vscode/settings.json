@@ -35,6 +35,9 @@
         "unordered_map": "cpp",
         "vector": "cpp",
         "algorithm": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "chrono": "cpp",
+        "iosfwd": "cpp",
+        "iostream": "cpp"
     }
 }
