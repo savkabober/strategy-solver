@@ -1,145 +1,103 @@
-// #include <vector>
-// #include <iostream>
-// #include <random>
-// #include <chrono>
-// #include "math.h"
-// #include "drawing.h"
-// #include <thread>
+#include "metrics.h"
+#include "random.h"
+#include "time.h"
+#include <algorithm>
+#define MAX_MUTATE_ANGLE (M_PI/6) //30 deg
+#define GENERATION_SIZE 300
+#define ELITE 10 //элитные варвары
+#define GENERATIONS 500
 
-// using namespace std;
-
-// struct Waypoint
-// {
-// public:
-//     double time;
-//     double acc_angle;
-//     Waypoint(double time_, double acc_angle_) : time(time_), acc_angle(acc_angle_) {}
-// };
-// long long int time()
-// {
-//     auto start = std::chrono::high_resolution_clock::now();
-//     auto duration = start.time_since_epoch();
-//     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
-//     return millis;
-// }
-
-// using Trajectory = vector<Waypoint>
-
-// mt19937 rng(chrono::high_resolution_clock::now().time_since_epoch().count());
-// double random_double(double min, double max)
-// {
-//     return uniform_real_distribution<double>(min, max)(rng);
-// }
-
-// int random_int(int min, int max)
-// {
-//     return uniform_int_distribution<int>(min, max)(rng);
-// }
-
-// void mutate_change_angle(Trajectory &t)
-// {
-//     if (t.empty())
-//         return;
-//     int idx = random_int(0, t.size() - 1);
-//     t[idx].acc_angle += random_double(-M_PI / 8.0, M_PI / 8.0);
-//     t[idx].acc_angle = wind_down_angle(t[idx].acc_angle);
-// }
-
-// void mutate_change_time(Trajectory &t)
-// {
-//     if (t.empty())
-//         return;
-//     int idx = random_int(0, t.size() - 1);
-//     t[idx].time *= random_double(0.7, 1.3); //+-30%
-//     if (t[idx].time < 0.1)
-//         t[idx].time = 0.1; // min time
-// }
-
-// void mutate_add_segment(Trajectory &t)
-// {
-//     if (t.empty())
-//     {
-//         t.push_back({random_double(-M_PI, M_PI), random_double(1.0, 5.0)});
-//         return;
-//     }
-//     int idx = random_int(0, t.size() - 1);
-//     Waypoint original_seg = t[idx];
-
-//     double split_time = random_double(0.1, original_seg.time - 0.1);
-//     if (split_time > 0 && original_seg.time - split_time > 0)
-//     {
-//         t[idx].time = split_time;
-//         Waypoint new_seg = {random_double(-M_PI, M_PI), original_seg.time - split_time};
-//         t.insert(t.begin() + idx + 1, new_seg);
-//     }
-// }
-
-// void mutate_remove_segment(Trajectory &t)
-// {
-//     if (t.size() <= 1)
-//         return;
-//     int idx = random_int(0, t.size() - 1);
-//     t.erase(t.begin() + idx);
-// }
-
-// void mutate(Trajectory &trajectory)
-// {
-//     double choice = random_double(0, 1);
-//     if (choice < 0.4)
-//     { // 40%
-//         mutate_change_angle(trajectory);
-//     }
-//     else if (choice < 0.8)
-//     { // 40%
-//         mutate_change_time(trajectory);
-//     }
-//     else if (choice < 0.95)
-//     { // 15%
-//         mutate_add_segment(trajectory);
-//     }
-//     else
-//     { // 5%
-//         mutate_remove_segment(trajectory);
-//     }
-// }
-// int main()
-// {
-
-//     Drawer drawer = Drawer(950, 650);
-//     // 1 stage: 0.4261636310795653 3.373608626246523
-//     // 2 stage: -2.7154290225102278 1.4336855804409427
-//     Trajectory traj = {Waypoint(3.373608626246523, 0.4261636310795653), Waypoint(1.4336855804409427, 2.7154290225102278)};
-//     // long long int start = time();
-//     while (drawer.window.isOpen())
-//     {
-//         double total_time;
-//         for (Waypoint wp : traj)
-//             total_time += wp.time;
-//         Point pos = Point(-4500, -3000);
-//         Point vel = Point(500, 0);
-//         for (double t = 0; t < total_time; t += 0.01)
-//         {
-//             Waypoint cur_wp = Waypoint(0, 0);
-//             double total_wp_time = 0;
-//             for (Waypoint wp : traj)
-//             {
-//                 total_wp_time += wp.time;
-//                 if (t < total_wp_time)
-//                 {
-//                     cur_wp = wp;
-//                     break;
-//                 }
-//             }
-//             Point acc = Point(MAX_ACC, 0).rotate(cur_wp.acc_angle);
-//             if ((vel + acc * 0.01).mag() < MAX_SPEED)
-//                 vel += acc * 0.01;
-//             pos += vel * 0.01;
-//             drawer.drawCircle(pos, 10, Color(200, 200, 200));
-//         }
-
-//         drawer.update();
-//     }
-
-//     // cout << random_double(0,10) << endl;
-//     return 0;
-// }
+struct Individual
+{
+    public:
+    Trajectory trajectory;
+    double fitness;
+    Individual(Trajectory traj_):trajectory(traj_),fitness(1e10){}
+};
+typedef vector<Individual> Gen;
+void mutate_angle(Trajectory& trajectory)
+{
+    int idx = random_int(0,trajectory.size()-1);
+    double delta_ang = random_double(-MAX_MUTATE_ANGLE,MAX_MUTATE_ANGLE);
+    trajectory[idx].acc_angle += delta_ang;
+    trajectory[idx].acc_angle = fmod(trajectory[idx].acc_angle + M_PI, 2.0 * M_PI) - M_PI;
+}
+void mutate_time(Trajectory& trajectory)
+{
+    int idx = random_int(0,trajectory.size()-1);
+    double delta_time = random_double(0.7,1.3);
+    trajectory[idx].time *= delta_time;
+}
+void add_waypoint(Trajectory& trajectory)
+{
+    int idx = random_int(0,trajectory.size()-1);
+    trajectory[idx].time/=2;
+    Waypoint new_wp = Waypoint(trajectory[idx].acc_angle+random_double(-MAX_MUTATE_ANGLE,MAX_MUTATE_ANGLE),trajectory[idx].time);
+    trajectory.insert(trajectory.begin()+idx+1,new_wp);
+}
+void remove_waypoint(Trajectory& trajectory)
+{
+    int idx = random_int(0,trajectory.size()-1);
+    trajectory.erase(trajectory.begin()+idx);
+}
+void mutate(Trajectory& trajectory)
+{
+    double r = random_double(0,1);//дабл r RR 
+    if(r<0.4)//40%
+        mutate_angle(trajectory);
+    else if (r<0.8)//40%
+        mutate_time(trajectory);
+    else if (r<0.95)//15%
+        add_waypoint(trajectory);
+    else//5% 
+        remove_waypoint(trajectory);
+}
+Gen new_generation(Individual parent,int size)
+{
+    Gen new_gen;
+    for(int i = 0;i<size;i++)
+    {
+        Trajectory new_traj = parent.trajectory;
+        mutate(new_traj);
+        new_gen.push_back(Individual(new_traj));
+    }
+    return new_gen;
+}
+int main()
+{
+    Field field  = Field(1);
+    Robot cur_rbt = field.allies[1];
+    Point tgt_pos = Point(2000,2000);
+    Point tgt_vel = Point(-1000,0);
+    double start_time = time();
+    FindWay estimator;
+    estimator.reset_config(field,cur_rbt,tgt_pos,tgt_vel);
+    Trajectory start_traj = {Waypoint(0,10),Waypoint(20,20)};//bangbang
+    Individual first_man = Individual(start_traj);
+    first_man.fitness = estimator.estimate(first_man.trajectory);
+    Gen new_gen = new_generation(first_man,GENERATION_SIZE);
+    for(Individual man:new_gen)
+        man.fitness = estimator.estimate(man.trajectory);
+    sort(new_gen.begin(), new_gen.end(), [](const Individual& a, const Individual& b) {
+            return a.fitness < b.fitness;
+        });
+    Gen best_individuals(new_gen.begin(),new_gen.begin()+ELITE);
+    for(int i = 0;i<GENERATIONS;i++)
+    {
+        new_gen.clear();
+        for(Individual men:best_individuals)//men men men
+        {
+            Gen new_smol_gen = new_generation(men,GENERATION_SIZE/ELITE);
+            new_gen.insert(new_gen.end(),new_smol_gen.begin(),new_smol_gen.end());
+        }
+        for(Individual man:new_gen)
+            man.fitness = estimator.estimate(man.trajectory);
+        sort(new_gen.begin(), new_gen.end(), [](const Individual& a, const Individual& b) {
+                return a.fitness < b.fitness;
+            });
+        Gen best_individuals(new_gen.begin(),new_gen.begin()+ELITE);
+    }
+    double end_time = time();
+    printf("%f",end_time-start_time);
+    return 0;
+}

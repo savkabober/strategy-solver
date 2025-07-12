@@ -316,10 +316,10 @@ private:
                 }
             }
         }
-        metrics[3] = t_move[n_move];
-        for (i = 0; i < 4; i++) {
-            cout << metrics[i] << endl;
-        }
+        metrics[3] = t_move[n_move];//савелий хуйланчик
+        // for (i = 0; i < 4; i++) {
+        //     cout << metrics[i] << endl;
+        // }
         return metrics[0] * DIST_K + metrics[1] * VEL_K + metrics[2] * OBSTACLE_K + metrics[3];
     }
 
@@ -387,7 +387,7 @@ public:
         }
     }
 
-    double evaluate(Trajectory &trajectory)
+    double estimate(Trajectory &trajectory)
     {
         reset_moves();
         for (const Waypoint& wp : trajectory) {
