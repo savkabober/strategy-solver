@@ -11,110 +11,276 @@ using namespace std;
 
 #define SQUARE(x) ((x) * (x))
 
-class Point
+class Complex;
+
+double abs2(const Complex &c);
+
+double abs(const Complex &c);
+
+struct Complex
 {
+private:
+    double conj, r_, i_;
+
 public:
+    double r, i;
+    Complex() : r(0), i(0) {}
+    Complex(double r_) : r(r_), i(0) {}
+    Complex(double r_, double i_) : r(r_), i(i_) {}
+    inline Complex operator-() const
+    {
+        return Complex(-r, -i);
+    }
+    inline Complex operator+(const Complex &other) const
+    {
+        return Complex(r + other.r, i + other.i);
+    }
+    inline Complex operator+(double other) const
+    {
+        return Complex(r + other, i);
+    }
+    inline Complex operator-(const Complex &other) const
+    {
+        return Complex(r - other.r, i - other.i);
+    }
+    inline Complex operator-(double other) const
+    {
+        return Complex(r - other, i);
+    }
+    inline Complex operator*(const Complex &other) const
+    {
+        return Complex(r * other.r - i * other.i, r * other.i + i * other.r);
+    }
+    inline Complex operator*(double other) const
+    {
+        return Complex(r * other, i * other);
+    }
+    inline Complex operator/(const Complex &other)
+    {
+        conj = SQUARE(other.r) + SQUARE(other.i);
+        return Complex((r * other.r + i * other.i) / conj, (-r * other.i + i * other.r) / conj);
+    }
+    inline Complex operator/(double other) const
+    {
+        return Complex(r / other, i / other);
+    }
+    inline Complex &operator+=(const Complex other)
+    {
+        r += other.r;
+        i += other.i;
+        return *this;
+    }
+    inline Complex &operator+=(double other)
+    {
+        r += other;
+        return *this;
+    }
+    inline Complex &operator-=(const Complex other)
+    {
+        r -= other.r;
+        i -= other.i;
+        return *this;
+    }
+    inline Complex &operator-=(double other)
+    {
+        r -= other;
+        return *this;
+    }
+    inline Complex &operator*=(const Complex &other)
+    {
+        r_ = r * other.r - i * other.i;
+        i_ = r * other.i + i * other.r;
+        r = r_;
+        i = i_;
+        return *this;
+    }
+    inline Complex &operator*=(double other)
+    {
+        r *= other;
+        i *= other;
+        return *this;
+    }
+    inline Complex &operator/=(const Complex &other)
+    {
+        conj = SQUARE(other.r) + SQUARE(other.i);
+        r_ = (r * other.r + i * other.i) / conj;
+        i_ = (-r * other.i + i * other.r) / conj;
+        r = r_;
+        i = i_;
+        return *this;
+    }
+    inline Complex &operator/=(double other)
+    {
+        r /= other;
+        i /= other;
+        return *this;
+    }
+    inline bool operator==(const Complex &other) const
+    {
+        return abs(*this - other) < EPSILON;
+    }
+    inline bool operator==(double other) const
+    {
+        return abs(*this - other) < EPSILON;
+    }
+    inline bool operator!=(const Complex &other) const
+    {
+        return !(*this == other);
+    }
+    inline bool operator!=(double other) const
+    {
+        return !(*this == other);
+    }
+    inline Complex &operator=(double other)
+    {
+        r = other;
+        i = 0;
+        return *this;
+    }
+};
+
+inline double abs2(const Complex &c)
+{
+    return SQUARE(c.r) + SQUARE(c.i);
+}
+inline double abs(const Complex &c)
+{
+    return sqrt(abs2(c));
+}
+inline double arg(const Complex &c)
+{
+    return atan2(c.i, c.r);
+}
+inline Complex pow(const Complex &c, double exp)
+{
+    static double ang, mag;
+    ang = arg(c);
+    mag = abs(c);
+    mag = pow(mag, exp);
+    ang *= exp;
+    return Complex(cos(ang) * mag, sin(ang) * mag);
+}
+inline Complex sqrt(const Complex &c)
+{
+    return pow(c, 0.5);
+}
+inline double real(const Complex &c)
+{
+    return c.r;
+}
+inline double imag(const Complex &c)
+{
+    return c.i;
+}
+ostream &operator<<(ostream &os, const Complex &c)
+{
+    os << "r = " << c.r << ", i = " << c.i;
+    return os;
+}
+
+class Point;
+
+double abs2(const Point &p);
+
+double abs(const Point &p);
+
+struct Point
+{
     double x, y;
     bool is_none;
     Point() : x(0), y(0), is_none(false) {}
     Point(double x_, double y_, bool is_none_ = false) : x(x_), y(y_), is_none(is_none_) {}
-    Point operator-()
+    Point operator-() const
     {
         return Point(-x, -y);
     }
-    Point operator+(Point b)
+    Point operator+(const Point &other) const
     {
-        return Point(x + b.x, y + b.y);
+        return Point(x + other.x, y + other.y);
     }
-    Point operator-(Point b)
+    Point operator-(const Point &other) const
     {
-        return Point(x - b.x, y - b.y);
+        return Point(x - other.x, y - other.y);
     }
-    Point operator*(double scalar)
+    Point operator*(double scalar_mult) const
     {
-        return Point(x * scalar, y * scalar);
+        return Point(x * scalar_mult, y * scalar_mult);
     }
-    Point operator/(double scalar)
+    Point operator/(double scalar_mult) const
     {
-        return Point(x / scalar, y / scalar);
+        return Point(x / scalar_mult, y / scalar_mult);
     }
-    Point &operator+=(const Point other)
+    Point &operator+=(const Point &other)
     {
         x += other.x;
         y += other.y;
         return *this;
     }
-    Point &operator-=(const Point other)
+    Point &operator-=(const Point &other)
     {
         x -= other.x;
         y -= other.y;
         return *this;
     }
-    Point &operator*=(const double other)
+    Point &operator*=(double other)
     {
         x *= other;
         y *= other;
         return *this;
     }
-    Point &operator/=(const double other)
+    Point &operator/=(double other)
     {
         x /= other;
         y /= other;
         return *this;
     }
-    bool operator==(Point other)
+    bool operator==(const Point &other) const
     {
-        return (*this - other).mag() < EPSILON;
+        return abs(*this - other) < EPSILON;
     }
-    bool operator!=(Point other)
+    bool operator!=(Point other) const
     {
         return !(*this == other);
     }
-    double scalar(Point b)
+    Point unity() const
     {
-        return x * b.x + y * b.y;
-    }
-
-    double vector(Point b)
-    {
-        return x * b.y - y * b.x;
-    }
-
-    double mag2()
-    {
-        return x * x + y * y;
-    }
-
-    double mag()
-    {
-        return sqrt(mag2());
-    }
-
-    Point unity()
-    {
-        double len = mag();
+        double len = abs(*this);
         return len > 0.0f ? Point(x / len, y / len) : Point(0.0, 0.0);
-    }
-
-    double arg()
-    {
-        return atan2(y, x);
-    }
-
-    Point rotate(double ang)
-    {
-        double c = cos(ang), s = sin(ang);
-        return Point(x * c - y * s, y * c + x * s);
     }
 };
 
+double abs2(const Point &p)
+{
+    return SQUARE(p.x) + SQUARE(p.y);
+}
+double abs(const Point &p)
+{
+    return sqrt(abs2(p));
+}
+double arg(const Point &p)
+{
+    return atan2(p.y, p.x);
+}
+double scalar_mult(const Point &p1, const Point &p2)
+{
+    return p1.x * p2.x + p1.y * p2.y;
+}
+double vector_mult(const Point &p1, const Point &p2)
+{
+    return p1.x * p2.y - p1.y * p2.x;
+}
+Point rotate(const Point &p, double ang)
+{
+    double c = cos(ang), s = sin(ang);
+    return Point(p.x * c - p.y * s, p.y * c + p.x * s);
+}
 ostream &operator<<(ostream &os, const Point &point)
 {
     os << "x = " << point.x << ", y = " << point.y;
     return os;
 }
 
-Point GRAVEYARD_POS = Point(GRAVEYARD_POS_X, 0);
+const Point GRAVEYARD_POS = Point(GRAVEYARD_POS_X, 0);
 
 class Object
 {
@@ -144,14 +310,14 @@ int sign(double a)
 
 Point closest_point_on_line(Point point1, Point point2, Point point, char type = 'S')
 {
-    double line_len = (point1 - point2).mag();
+    double line_len = abs(point1 - point2);
     if (line_len == 0)
     {
         return point1;
     }
     Point line_dir = (point1 - point2).unity();
     Point point_vec = point - point1;
-    double dot_product = point_vec.scalar(line_dir);
+    double dot_product = scalar_mult(point_vec, line_dir);
     if (dot_product <= 0 && type != 'L')
     {
         return point1;
@@ -198,11 +364,11 @@ Point get_line_inretsesction(
 
 double wind_down_angle(double angle)
 {
-    if (fabs(angle) > 2 * M_PI)
+    if (abs(angle) > 2 * M_PI)
     {
         angle = fmod(angle, 2 * M_PI);
     }
-    if (fabs(angle) > M_PI)
+    if (abs(angle) > M_PI)
     {
         angle -= 2 * M_PI * sign(angle);
     }
@@ -211,12 +377,12 @@ double wind_down_angle(double angle)
 
 double get_angle_between_points(Point a, Point b, Point c)
 {
-    return wind_down_angle((a - b).arg() - (c - b).arg());
+    return wind_down_angle(arg(a - b) - arg(c - b));
 }
 
 void circles_inter(Point p0, Point p1, double r0, double r1, Point *out)
 {
-    double d = (p0 - p1).mag();
+    double d = abs(p0 - p1);
     double a = (r0 * r0 - r1 * r1 + d * d) / (2 * d);
     double h = sqrtf(r0 * r0 - a * a);
     double x2 = p0.x + a * (p1.x - p0.x) / d;
@@ -229,7 +395,7 @@ void circles_inter(Point p0, Point p1, double r0, double r1, Point *out)
 
 int get_tangent_points(Point point0, Point point1, double r, Point *out)
 {
-    double d = (point1 - point0).mag();
+    double d = abs(point1 - point0);
     if (d < r)
     {
         return 0;
@@ -251,7 +417,7 @@ Point nearest_point_on_poly(Point p, Point *poly, int ed_n)
     for (int i = 0; i < ed_n; i++)
     {
         pnt = closest_point_on_line(poly[i], poly[i > 0 ? i - 1 : ed_n - 1], p);
-        d = (pnt - p).mag();
+        d = abs(pnt - p);
         if (d < min_ || min_ < 0)
         {
             min_ = d;
@@ -263,10 +429,10 @@ Point nearest_point_on_poly(Point p, Point *poly, int ed_n)
 
 bool is_point_inside_poly(Point p, Point *points, int ed_n)
 {
-    double old_sign = sign((p - points[ed_n - 1]).vector(points[0] - points[ed_n - 1]));
+    double old_sign = sign(vector_mult(p - points[ed_n - 1], points[0] - points[ed_n - 1]));
     for (int i = 0; i < ed_n - 1; i++)
     {
-        if (old_sign != sign((p - points[i]).vector(points[i + 1] - points[i])))
+        if (old_sign != sign(vector_mult(p - points[i], points[i + 1] - points[i])))
         {
             return false;
         }
@@ -274,7 +440,7 @@ bool is_point_inside_poly(Point p, Point *points, int ed_n)
     return true;
 }
 
-int solve_one(double a, double b, complex<double> *out)
+inline int solve_one(double a, double b, complex<double> *out)
 {
     if (a == 0)
     {
@@ -284,47 +450,69 @@ int solve_one(double a, double b, complex<double> *out)
     return 1;
 }
 
-int solve_two(double a, double b, double c, complex<double> *out)
+inline int solve_one(double a, double b, double *out) {
+    if (a == 0)
+        return 0;
+    out[0] = -b / a;
+    return 1;
+}
+
+inline int solve_two(double a, double b, double c, complex<double> *out)
 {
     if (a == 0)
     {
         return solve_one(b, c, out);
-        ;
     }
-    static complex<double> D;
-    D = complex<double>(b * b - 4 * a * c, 0.0);
+    complex<double> D(b * b - 4 * a * c, 0);
+    if (abs(D) < EPSILON) {
+        out[0] = -b / (2 * a);
+        return 1;
+    }
     out[0] = (-b + sqrt(D)) / (2 * a);
     out[1] = (-b - sqrt(D)) / (2 * a);
     return 2;
 }
 
-int solve_three(double a, double b, double c, double d, complex<double> *out)
+inline int solve_two(double a, double b, double c, double *out) {
+    if (a == 0)
+        return solve_one(b, c, out);
+    double D = b * b - 4 * a * c;
+    if (D < -EPSILON) {
+        return 0;
+    }
+    if (D < EPSILON) {
+        out[0] = -b / (2 * a);
+        return 1;
+    }
+    out[0] = (-b - sqrt(D)) / (2 * a);
+    out[1] = (-b + sqrt(D)) / (2 * a);
+    return 2;
+}
+
+inline int solve_three(double a, double b, double c, double d, complex<double> *out)
 {
     if (a == 0)
     {
         return solve_two(b, c, d, out);
     }
-    static double D0, D1, alpha;
-    D0 = b * b - 3 * a * c;
-    D1 = 2 * b * b * b - 9 * a * b * c + 27 * a * a * d;
+    double D0 = b * b - 3 * a * c, D1 = 2 * b * b * b - 9 * a * b * c + 27 * a * a * d, alpha;
     if (D0 == 0 && D1 == 0)
     {
         out[0] = -b / (3 * a);
         return 1;
     }
-    static complex<double> m, high, low, e = complex<double>(-1 / 2.0, sqrt(3.0) / 2.0);
-    m = sqrt(complex<double>(D1 * D1 - 4.0 * D0 * D0 * D0, 0));
-    if (fabs(m) < EPSILON)
+    complex<double> m = sqrt(complex<double>(D1 * D1 - 4.0 * D0 * D0 * D0, 0)), high, low, e = complex<double>(-1 / 2.0, sqrt(3.0) / 2.0);
+    if (abs(m) < EPSILON)
     {
         high = pow(D1, 1 / 3);
         low = D0 / high;
         out[0] = -(b + high * e + low / e) / (3.0 * a);
         alpha = fmod(arg(low) - arg(high), 2.0 * M_PI);
-        if (fabs(alpha) > M_PI)
+        if (abs(alpha) > M_PI)
         {
             alpha -= 2.0 * M_PI * sign(alpha);
         }
-        if (fabs(alpha) < M_PI / 4)
+        if (abs(alpha) < M_PI / 4)
         {
             out[1] = -(b + high + low) / (3.0 * a);
         }
@@ -334,7 +522,7 @@ int solve_three(double a, double b, double c, double d, complex<double> *out)
         }
         return 2;
     }
-    if (fabs(m - D1) < EPSILON)
+    if (abs(m - D1) < EPSILON)
     {
         high = pow((D1 + m) / 2.0, 1.0 / 3.0);
     }
@@ -349,7 +537,7 @@ int solve_three(double a, double b, double c, double d, complex<double> *out)
     return 3;
 }
 
-int solve_four(double a, double b, double c, double d, double e, complex<double> *out)
+inline int solve_four(double a, double b, double c, double d, double e, complex<double> *out)
 {
     if (a == 0)
     {
@@ -359,30 +547,25 @@ int solve_four(double a, double b, double c, double d, double e, complex<double>
     c /= a;
     d /= a;
     e /= a;
-    static double p, q, r;
-    p = (8.0 * c - 3.0 * b * b) / 8.0;
-    q = (b * b * b - 4.0 * b * c + 8.0 * d) / 8.0;
-    r = (-3.0 * b * b * b * b + 256.0 * e - 64.0 * b * d + 16.0 * b * b * c) / 256.0;
-    static int i, n;
-    n = solve_three(8.0, 8.0 * p, 2.0 * p * p - 8.0 * r, -q * q, out);
-    static complex<double> m, k, h, l1, l2;
-    m = complex<double>(0, 0);
+    double p = (8.0 * c - 3.0 * b * b) / 8.0, q = (b * b * b - 4.0 * b * c + 8.0 * d) / 8.0, r = (-3.0 * b * b * b * b + 256.0 * e - 64.0 * b * d + 16.0 * b * b * c) / 256.0;
+    int i, n = solve_three(8.0, 8.0 * p, 2.0 * p * p - 8.0 * r, -q * q, out);;
+    complex<double> m(0, 0), k, h, l1, l2;
     for (i = 0; i < n; i++)
     {
-        if (fabs(out[i]) > EPSILON)
+        if (abs(out[i]) > EPSILON)
         {
             m = out[i];
             break;
         }
     }
-    if (abs(m) == 0)
+    if (abs(m) < EPSILON)
     {
-        if (p == 0)
+        if (p < EPSILON)
         {
             out[0] = -b / 4.0;
             return 1;
         }
-        k = sqrt(-p / 2);
+        k = sqrt(-p / 2.0);
         out[0] = -b / 4.0 + k;
         out[1] = -b / 4.0 - k;
         return 2;
@@ -394,12 +577,12 @@ int solve_four(double a, double b, double c, double d, double e, complex<double>
     out[0] = -b / 4.0 + (k + l1) / 2.0;
     out[1] = -b / 4.0 + (k - l1) / 2.0;
     n = 2;
-    if (fabs(2.0 * k - l1 - l2) > EPSILON && fabs(2.0 * k + l1 - l2) > EPSILON)
+    if (abs(2.0 * k - l1 - l2) > EPSILON && abs(2.0 * k + l1 - l2) > EPSILON)
     {
         out[2] = -b / 4.0 + (-k + l2) / 2.0;
         n++;
     }
-    if (fabs(2.0 * k + l1 + l2) > EPSILON && fabs(2.0 * k + l2 - l1) > EPSILON)
+    if (abs(2.0 * k + l1 + l2) > EPSILON && abs(2.0 * k + l2 - l1) > EPSILON)
     {
         out[n] = -b / 4.0 + (-k - l2) / 2.0;
         n++;
@@ -411,14 +594,14 @@ Point closest_point_on_parabola(Point x, Point r0, Point v0, Point a, double t_m
 {
     static double ak, bk, ck, dk, real_roots[3], best, answ, value;
     static int n_rls, n_rts, i;
-    if (a.mag2() == 0 && v0.mag2() == 0)
+    if (abs2(a) == 0 && abs2(v0) == 0)
     {
         return r0;
     }
-    ak = a.mag2() / 2.0;
-    bk = 3.0 / 2.0 * a.scalar(v0);
-    ck = v0.mag2() + a.scalar(r0 - x);
-    dk = v0.scalar(r0 - x);
+    ak = abs2(a) / 2.0;
+    bk = 3.0 / 2.0 * scalar_mult(a, v0);
+    ck = abs2(v0) + scalar_mult(a, r0 - x);
+    dk = scalar_mult(v0, r0 - x);
     complex<double> roots[3];
     n_rts = solve_three(ak, bk, ck, dk, roots);
     n_rls = 0;
@@ -435,7 +618,7 @@ Point closest_point_on_parabola(Point x, Point r0, Point v0, Point a, double t_m
     {
         if (real_roots[i] >= t_min && real_roots[i] <= t_max)
         {
-            value = (r0 + v0 * real_roots[i] + a * real_roots[i] * real_roots[i] / 2.0 - x).mag2();
+            value = abs2(r0 + v0 * real_roots[i] + a * real_roots[i] * real_roots[i] / 2.0 - x);
             if (best < 0 || value < best)
             {
                 best = value;
@@ -443,17 +626,93 @@ Point closest_point_on_parabola(Point x, Point r0, Point v0, Point a, double t_m
             }
         }
     }
-    value = (r0 + v0 * t_min + a * t_min * t_min / 2.0 - x).mag2();
+    value = abs2(r0 + v0 * t_min + a * t_min * t_min / 2.0 - x);
     if (best < 0 || value < best)
     {
         best = value;
         answ = t_min;
     }
-    value = (r0 + v0 * t_max + a * t_max * t_max / 2.0 - x).mag2();
+    value = abs2(r0 + v0 * t_max + a * t_max * t_max / 2.0 - x);
     if (best < 0 || value < best)
     {
         best = value;
         answ = t_max;
     }
     return r0 + v0 * answ + a * answ * answ / 2.0;
+}
+
+int gauss_sovle(double *a, double *b, int n, double *x)
+{
+    static double maxV, val, k;
+    static int maxJ, i1, i2, i, j, p;
+    // a[0] = -1;
+    // a[1] = 1;
+    // a[2] = -2;
+    // a[3] = 2;
+    // b[0] = 1;
+    // b[1] = 1;
+    maxV = 0;
+    maxJ = 0;
+    for (i = 0; i < n; i++)
+    {
+        maxJ = 0;
+        maxV = 0;
+        for (j = 0; j < n - i; j++)
+        {
+            val = abs(a[(i + j) * n + i]);
+            if (val > maxV)
+            {
+                maxV = val;
+                maxJ = j;
+            }
+        }
+        // cout << "jjjjjjj " << maxJ << endl;
+        if (maxV == 0)
+        {
+            return 0;
+        }
+        if (maxJ != 0)
+        {
+            i1 = (maxJ + i) * n + i;
+            i2 = i * n + i;
+            for (j = 0; j < n - i; j++)
+            {
+                a[i1 + j] += a[i2 + j];
+                a[i2 + j] = a[i1 + j] - a[i2 + j];
+                a[i1 + j] -= a[i2 + j];
+            }
+            b[maxJ + i] += b[i];
+            b[i] = b[maxJ + i] - b[i];
+            b[maxJ + i] -= b[i];
+        }
+        // cout << "semen lobanov " << a[0] << ", " << a[1] << ", " << a[2] << ", " << a[3] << ", " << b[0] << ", " << b[1] << endl;
+        for (j = 1; j < n - i; j++)
+        {
+            k = a[(i + j) * n + i] / a[i * n + i];
+            for (p = 1; p < n - i; p++)
+            {
+                a[(i + j) * n + i + p] -= a[i * n + i + p] * k;
+            }
+            b[i + j] -= b[i] * k;
+        }
+    }
+    // cout << "pupupu " << a[0] << ", " << a[1] << ", " << a[2] << ", " << a[3] << ", " << b[0] << ", " << b[1] << endl;
+    for (i = n - 1; i >= 0; i--)
+    {
+        for (j = n - 1; j > i; j--)
+        {
+            b[i] -= a[i * n + j] * x[j];
+        }
+        if (a[i * n + i] == 0)
+        {
+            // cout << "нашел пидора" << endl;
+            x[i] = 0;
+        }
+        else
+        {
+            x[i] = b[i] / a[i * n + i];
+        }
+    }
+    // cout << "gauss " << a[0] << ", " << b[0] << ", " << x[0] << endl;
+    return 1;
 }

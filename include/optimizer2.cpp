@@ -2,60 +2,60 @@
 #include "random.h"
 #include "time.h"
 #include <algorithm>
-#define MAX_MUTATE_ANGLE (M_PI/6) //30 deg
+#define MAX_MUTATE_ANGLE (M_PI / 6) // 30 deg
 #define GENERATION_SIZE 300
-#define ELITE 10 //элитные варвары
+#define ELITE 10 // элитные варвары
 #define GENERATIONS 500
 
 struct Individual
 {
-    public:
+public:
     Trajectory trajectory;
     double fitness;
-    Individual(Trajectory traj_):trajectory(traj_),fitness(1e10){}
+    Individual(Trajectory traj_) : trajectory(traj_), fitness(1e10) {}
 };
 typedef vector<Individual> Gen;
-void mutate_angle(Trajectory& trajectory)
+void mutate_angle(Trajectory &trajectory)
 {
-    int idx = random_int(0,trajectory.size()-1);
-    double delta_ang = random_double(-MAX_MUTATE_ANGLE,MAX_MUTATE_ANGLE);
+    int idx = random_int(0, trajectory.size() - 1);
+    double delta_ang = random_double(-MAX_MUTATE_ANGLE, MAX_MUTATE_ANGLE);
     trajectory[idx].acc_angle += delta_ang;
     trajectory[idx].acc_angle = fmod(trajectory[idx].acc_angle + M_PI, 2.0 * M_PI) - M_PI;
 }
-void mutate_time(Trajectory& trajectory)
+void mutate_time(Trajectory &trajectory)
 {
-    int idx = random_int(0,trajectory.size()-1);
-    double delta_time = random_double(0.7,1.3);
+    int idx = random_int(0, trajectory.size() - 1);
+    double delta_time = random_double(0.7, 1.3);
     trajectory[idx].time *= delta_time;
 }
-void add_waypoint(Trajectory& trajectory)
+void add_waypoint(Trajectory &trajectory)
 {
-    int idx = random_int(0,trajectory.size()-1);
-    trajectory[idx].time/=2;
-    Waypoint new_wp = Waypoint(trajectory[idx].acc_angle+random_double(-MAX_MUTATE_ANGLE,MAX_MUTATE_ANGLE),trajectory[idx].time);
-    trajectory.insert(trajectory.begin()+idx+1,new_wp);
+    int idx = random_int(0, trajectory.size() - 1);
+    trajectory[idx].time /= 2;
+    Waypoint new_wp = Waypoint(trajectory[idx].acc_angle + random_double(-MAX_MUTATE_ANGLE, MAX_MUTATE_ANGLE), trajectory[idx].time);
+    trajectory.insert(trajectory.begin() + idx + 1, new_wp);
 }
-void remove_waypoint(Trajectory& trajectory)
+void remove_waypoint(Trajectory &trajectory)
 {
-    int idx = random_int(0,trajectory.size()-1);
-    trajectory.erase(trajectory.begin()+idx);
+    int idx = random_int(0, trajectory.size() - 1);
+    trajectory.erase(trajectory.begin() + idx);
 }
-void mutate(Trajectory& trajectory)
+void mutate(Trajectory &trajectory)
 {
-    double r = random_double(0,1);//дабл r RR 
-    if(r<0.4)//40%
+    double r = random_double(0, 1); // дабл r RR
+    if (r < 0.4)                    // 40%
         mutate_angle(trajectory);
-    else if (r<0.8)//40%
+    else if (r < 0.8) // 40%
         mutate_time(trajectory);
-    else if (r<0.95)//15%
+    else if (r < 0.95) // 15%
         add_waypoint(trajectory);
-    else//5% 
+    else // 5%
         remove_waypoint(trajectory);
 }
-Gen new_generation(Individual parent,int size)
+Gen new_generation(Individual parent, int size)
 {
     Gen new_gen;
-    for(int i = 0;i<size;i++)
+    for (int i = 0; i < size; i++)
     {
         Trajectory new_traj = parent.trajectory;
         mutate(new_traj);
@@ -65,7 +65,7 @@ Gen new_generation(Individual parent,int size)
 }
 int main()
 {
-    Field field  = Field(1);
+    /*Field field  = Field(1);
     Robot cur_rbt = field.allies[1];
     Point tgt_pos = Point(2000,2000);
     Point tgt_vel = Point(-1000,0);
@@ -98,6 +98,36 @@ int main()
         Gen best_individuals(new_gen.begin(),new_gen.begin()+ELITE);
     }
     double end_time = time();
-    printf("%f",end_time-start_time);
+    printf("%f\n",end_time-start_time);*/
+    FindWay lol;
+
+    Point ally_poses[MAX_ROBOT_COUNT], enemy_poses[MAX_ROBOT_COUNT];
+
+    double ally_angles[MAX_ROBOT_COUNT], enemy_angles[MAX_ROBOT_COUNT];
+
+    Field field(-1);
+
+    FindWay moving;
+
+    for (int i = 0; i < MAX_ROBOT_COUNT; i++)
+    {
+        ally_poses[i] = GRAVEYARD_POS;
+        ally_angles[i] = 0;
+        enemy_poses[i] = GRAVEYARD_POS;
+        enemy_angles[i] = 0;
+    }
+
+    ally_poses[0] = Point(0, 0);
+    ally_poses[1] = Point(-150, 300);
+    ally_poses[2] = Point(50, 300);
+    ally_poses[3] = Point(-50, 500);
+
+    field.update_all(ally_poses, ally_angles, enemy_poses, enemy_angles, Point(0, 0), time());
+
+    Trajectory pupupu = {Waypoint(0, 1), Waypoint(0, 2)};
+
+    lol.reset_config(field, field.allies[0], Point(0, 2000), Point(500, 0), false);
+
+    lol.estimate(pupupu);
     return 0;
 }

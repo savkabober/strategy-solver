@@ -44,10 +44,10 @@ void quick_sort(double *arr, int low, int high) {
 int abs_partition(vector<double> &arr, int low, int high) {
     static double pivot;
     static int i, j;
-    pivot = fabs(arr[high]);
+    pivot = abs(arr[high]);
     i = low - 1;
     for (j = low; j < high; j++) {
-        if (fabs(arr[j]) < pivot) {
+        if (abs(arr[j]) < pivot) {
             i++;
             if (i != j) {
                 my_swap(arr[i], arr[j]);

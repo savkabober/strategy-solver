@@ -7,13 +7,14 @@
 #include <complex>
 #include <vector>
 #include "quicksort.h"
+#include "time.h"
 
 using namespace std;
 
 struct Waypoint
 {
     double acc_angle, time;
-    Waypoint(double acc_angle_, double time_) : acc_angle(acc_angle_) , time(time_){}
+    Waypoint(double acc_angle_, double time_) : acc_angle(acc_angle_), time(time_) {}
 };
 
 using Trajectory = vector<Waypoint>;
@@ -22,10 +23,14 @@ class FindWay
 {
 private:
     Object obj[2 * MAX_ROBOT_COUNT + 1];
-    Point r_mv[2 * MAX_SOLVER_DEGREE + 1], v_mv[2 * MAX_SOLVER_DEGREE + 1], a_mv[2 * MAX_SOLVER_DEGREE], target_pos, target_vel, m_center[2 * MAX_ROBOT_COUNT + 1];
-    double t_move[2 * MAX_SOLVER_DEGREE + 1];
+    Point r_mv[2 * MAX_SOLVER_DEGREE + 1], v_mv[2 * MAX_SOLVER_DEGREE + 1], a_mv[2 * MAX_SOLVER_DEGREE];
+    Point closest, start_vals[3], target_pos, target_vel, m_center[2 * MAX_ROBOT_COUNT + 1];
+    double t_move[2 * MAX_SOLVER_DEGREE + 1], dt, acc_time, min_t, scal, average_dist, ak, bk, ck, dk, ek, real_rt;
+    double minVal, val, metrics[4];
     vector<double> roots[2 * MAX_ROBOT_COUNT + 1], grp_rts[2 * MAX_ROBOT_COUNT + 1];
-    int n_move, n_objects, n_groups, i, j, k, group[2 * MAX_ROBOT_COUNT + 1];
+    int n_move, n_objects, n_groups, i, j, k, group[2 * MAX_ROBOT_COUNT + 1], idx, poses[3], size, n_rts;
+    int enter_idx, group_score, mv_idx[3], grp_size, n_group;
+    complex<double> complex_roots[4];
     int get_t_idx(double t)
     {
         if (t < 0 || t > t_move[n_move])
@@ -36,7 +41,6 @@ private:
         {
             return 0;
         }
-        static int idx;
         for (idx = 1; t_move[idx] < t; idx++)
             ;
         return idx - 1;
@@ -44,8 +48,6 @@ private:
 
     Point get_current_pos(double t, int idx_ = -1)
     {
-        static double dt;
-        static int idx;
         if (idx_ >= 0 && idx_ < n_move)
         {
             idx = idx_;
@@ -64,7 +66,6 @@ private:
 
     Point get_current_vel(double t, int idx_ = -1)
     {
-        static int idx;
         if (idx_ >= 0 && idx_ < n_move)
         {
             idx = idx_;
@@ -82,7 +83,6 @@ private:
 
     Point get_current_acc(double t, int idx_ = -1)
     {
-        static int idx;
         if (idx_ >= 0 && idx_ < n_move)
         {
             idx = idx_;
@@ -104,21 +104,19 @@ private:
         t_move[0] = 0;
         for (i = 0; i < 2 * MAX_ROBOT_COUNT + 1; i++)
         {
-            roots[i] = vector<double>();
+            roots[i].clear();
             roots[i].push_back(0.0);
-            grp_rts[i] = vector<double>();
+            grp_rts[i].clear();
         }
     }
 
     void append_segment(double angle, double t)
     {
-        static double acc_time, min_t, scal;
-        static Point r, v, a, rp, acc;
         if (t == 0)
             return;
-        a_mv[n_move] = Point(MAX_ACC, 0).rotate(angle);
-        scal = a_mv[n_move].scalar(v_mv[n_move]);
-        acc_time = (-scal + sqrt(scal * scal + 4.0 * MAX_ACC * MAX_ACC * (MAX_SPEED * MAX_SPEED - v_mv[n_move].mag2()))) / (2 * MAX_ACC * MAX_ACC);
+        a_mv[n_move] = rotate(Point(MAX_ACC, 0), angle);
+        scal = scalar_mult(a_mv[n_move], v_mv[n_move]);
+        acc_time = (-scal + sqrt(SQUARE(scal) + 4.0 * SQUARE(MAX_ACC) * (SQUARE(MAX_SPEED) - abs2(v_mv[n_move])))) / (2 * SQUARE(MAX_ACC));
         if (acc_time > EPSILON)
         {
             min_t = fmin(acc_time, t);
@@ -139,19 +137,15 @@ private:
 
     void find_roots()
     {
-        static int poses[3], size, n_rts;
-        static double average_dist, ak, bk, ck, dk, ek, real_rt;
-        static bool gone_in;
-        static complex<double> complex_roots[4];
         for (i = 0; i < n_move; i++)
         {
             for (j = 0; j < n_objects; j++)
             {
-                ek = (r_mv[i] - obj[j].c).mag2() - SQUARE(ROBOT_R + obj[j].r);
-                dk = 2.0 * v_mv[i].scalar(r_mv[i] - obj[j].c);      
-                ck = r_mv[i].scalar(a_mv[i]) + v_mv[i].mag2() - a_mv[i].scalar(obj[j].c);
-                bk = v_mv[i].scalar(a_mv[i]);
-                ak = a_mv[i].mag2() / 4.0;
+                ek = abs2(r_mv[i] - obj[j].c) - SQUARE(ROBOT_R + obj[j].r);
+                dk = 2.0 * scalar_mult(r_mv[i] - obj[j].c, v_mv[i]);
+                ck = scalar_mult(r_mv[i] - obj[j].c, a_mv[i]) + abs2(v_mv[i]);
+                bk = scalar_mult(v_mv[i], a_mv[i]);
+                ak = abs2(a_mv[i]) / 4.0;
                 n_rts = solve_four(ak, bk, ck, dk, ek, complex_roots);
                 for (k = 0; k < n_rts; k++)
                 {
@@ -184,26 +178,17 @@ private:
                 {
                     continue;
                 }
-                if (poses[0] != 0 && (get_current_pos((roots[i][poses[0]] + roots[i][poses[1]]) / 2.0) - obj[i].c).mag() < ROBOT_R + obj[i].r)
+                if (poses[0] != 0 && abs(get_current_pos((roots[i][poses[0]] + roots[i][poses[1]]) / 2.0) - obj[i].c) < ROBOT_R + obj[i].r)
                 {
                     grp_rts[group[i]].push_back(roots[i][poses[0]]);
-                    gone_in = true;
-                }
-                else
-                {
-                    gone_in = false;
                 }
                 if (poses[2] < size)
                 {
-                    average_dist = (get_current_pos((roots[i][poses[0]] + roots[i][poses[1]]) / 2.0) - obj[i].c).mag() - ROBOT_R - obj[i].r;
-                    if (average_dist * ((get_current_pos((roots[i][poses[1]] + roots[i][poses[2]]) / 2.0) - obj[i].c).mag() - ROBOT_R - obj[i].r) < 0)
+                    average_dist = abs(get_current_pos((roots[i][poses[0]] + roots[i][poses[1]]) / 2.0) - obj[i].c) - ROBOT_R - obj[i].r;
+                    if (average_dist * (abs(get_current_pos((roots[i][poses[1]] + roots[i][poses[2]]) / 2.0) - obj[i].c) - ROBOT_R - obj[i].r) < 0)
                     {
                         if (average_dist < 0)
                         {
-                            if (!gone_in)
-                            {
-                                grp_rts[group[i]].push_back(0);
-                            }
                             grp_rts[group[i]].push_back(-roots[i][poses[1]]);
                         }
                         else
@@ -211,7 +196,6 @@ private:
                             grp_rts[group[i]].push_back(roots[i][poses[1]]);
                         }
                     }
-                    gone_in = true;
                 }
                 for (j = poses[2]; j < size - 1;)
                 {
@@ -220,8 +204,8 @@ private:
                     poses[0] = poses[1];
                     poses[1] = poses[2];
                     poses[2] = j;
-                    average_dist = (get_current_pos((roots[i][poses[0]] + roots[i][poses[1]]) / 2.0) - obj[i].c).mag() - ROBOT_R - obj[i].r;
-                    if (average_dist * ((get_current_pos((roots[i][poses[1]] + roots[i][poses[2]]) / 2.0) - obj[i].c).mag() - ROBOT_R - obj[i].r) < 0)
+                    average_dist = abs(get_current_pos((roots[i][poses[0]] + roots[i][poses[1]]) / 2.0) - obj[i].c) - ROBOT_R - obj[i].r;
+                    if (average_dist * (abs(get_current_pos((roots[i][poses[1]] + roots[i][poses[2]]) / 2.0) - obj[i].c) - ROBOT_R - obj[i].r) < 0)
                     {
                         if (average_dist < 0)
                         {
@@ -233,8 +217,8 @@ private:
                         }
                     }
                 }
-                size = grp_rts[group[i]].size() - 1;
-                if (gone_in && grp_rts[group[i]][size] >= 0)
+                size = grp_rts[group[i]].size();
+                if (size > 0 && grp_rts[group[i]][size - 1] >= 0)
                 {
                     grp_rts[group[i]].push_back(-t_move[n_move]);
                 }
@@ -248,15 +232,12 @@ private:
 
     double solve_metrics()
     {
-        static int enter_idx, group_score, mv_idx[3], grp_size;
-        static Point closest, start_vals[3];
-        static double minVal, val, metrics[4];
-        metrics[0] = (r_mv[n_move] - target_pos).mag() / MAX_SPEED;
+        metrics[0] = abs(r_mv[n_move] - target_pos) / MAX_SPEED;
         if (metrics[0] < 0.05)
         {
             metrics[0] = 0;
         }
-        metrics[1] = (v_mv[n_move] - target_vel).mag() / MAX_ACC;
+        metrics[1] = abs(v_mv[n_move] - target_vel) / MAX_ACC;
         if (metrics[1] < 0.05)
         {
             metrics[1] = 0;
@@ -287,36 +268,36 @@ private:
                     if (mv_idx[1] < mv_idx[0])
                     {
                         closest = closest_point_on_parabola(m_center[i], start_vals[0], start_vals[1], start_vals[2], 0, -grp_rts[i][j] - grp_rts[i][enter_idx]);
-                        minVal = (closest - m_center[i]).mag();
+                        minVal = abs(closest - m_center[i]);
                     }
                     else
                     {
                         k = mv_idx[0];
                         closest = closest_point_on_parabola(m_center[i], start_vals[0], start_vals[1], start_vals[2], 0, t_move[mv_idx[0]] - grp_rts[i][enter_idx]);
-                        minVal = (closest - m_center[i]).mag();
+                        minVal = abs(closest - m_center[i]);
                         for (; k < mv_idx[1]; k++)
                         {
                             closest = closest_point_on_parabola(m_center[i], r_mv[k], v_mv[k], a_mv[k], 0, t_move[k + 1] - t_move[k]);
-                            val = (closest - m_center[i]).mag();
+                            val = abs(closest - m_center[i]);
                             if (val < minVal)
                             {
                                 minVal = val;
                             }
                         }
                         closest = closest_point_on_parabola(m_center[i], r_mv[k], v_mv[k], a_mv[k], 0, -grp_rts[i][j] - t_move[k]);
-                        val = (closest - m_center[i]).mag();
+                        val = abs(closest - m_center[i]);
                         if (val < minVal)
                         {
                             minVal = val;
                         }
                     }
-                    cout << minVal << " aaa" << endl;
+                    // cout << minVal << " aaa" << endl;
                     metrics[2] += pow(POW_BASE, -minVal);
                     enter_idx = j + 1;
                 }
             }
         }
-        metrics[3] = t_move[n_move];//савелий хуйланчик
+        metrics[3] = t_move[n_move]; // савелий хуйланчик
         // for (i = 0; i < 4; i++) {
         //     cout << metrics[i] << endl;
         // }
@@ -326,7 +307,6 @@ private:
 public:
     void reset_config(const Field &field, const Robot &cur_rbt, Point target_pos_, Point target_vel_, bool ball_collision = true)
     {
-        static int n_group;
         target_pos = target_pos_;
         target_vel = target_vel_;
         r_mv[0] = cur_rbt.get_pos();
@@ -334,7 +314,7 @@ public:
         n_objects = 0;
         for (const Robot &rbt : field.active_allies)
         {
-            if (rbt != cur_rbt && (r_mv[0] - rbt.get_pos()).mag() >= 2.0 * ROBOT_R && (target_pos - rbt.get_pos()).mag() >= 2.0 * ROBOT_R)
+            if (rbt != cur_rbt && abs(r_mv[0] - rbt.get_pos()) >= 2.0 * ROBOT_R && abs(target_pos - rbt.get_pos()) >= 2.0 * ROBOT_R)
             {
                 // cout << rbt.get_id() << ", " << rbt.get_color() << endl;
                 obj[n_objects] = Object(rbt.get_pos(), rbt.get_r());
@@ -343,14 +323,14 @@ public:
         }
         for (const Robot &rbt : field.active_enemies)
         {
-            if (rbt != cur_rbt && (r_mv[0] - rbt.get_pos()).mag() >= 2.0 * ROBOT_R && (target_pos - rbt.get_pos()).mag() >= 2.0 * ROBOT_R)
+            if (rbt != cur_rbt && abs(r_mv[0] - rbt.get_pos()) >= 2.0 * ROBOT_R && abs(target_pos - rbt.get_pos()) >= 2.0 * ROBOT_R)
             {
                 // cout << rbt.get_id() << ", " << rbt.get_color() << endl;
                 obj[n_objects] = Object(rbt.get_pos(), rbt.get_r());
                 n_objects++;
             }
         }
-        if (ball_collision && (r_mv[0] - field.ball.get_pos()).mag() >= ROBOT_R + BALL_R && (target_pos - field.ball.get_pos()).mag() >= ROBOT_R + BALL_R)
+        if (ball_collision && abs(r_mv[0] - field.ball.get_pos()) >= ROBOT_R + BALL_R && abs(target_pos - field.ball.get_pos()) >= ROBOT_R + BALL_R)
         {
             obj[n_objects] = Object(field.ball.get_pos(), field.ball.get_r());
             n_objects++;
@@ -361,7 +341,7 @@ public:
             group[i] = -1;
             for (j = i - 1; j >= 0; j--)
             {
-                if ((obj[i].c - obj[j].c).mag() < obj[i].r + obj[j].r + 2 * ROBOT_R)
+                if (abs(obj[i].c - obj[j].c) < obj[i].r + obj[j].r + 2 * ROBOT_R)
                 {
                     group[i] = group[j];
                 }
@@ -390,7 +370,7 @@ public:
     double estimate(Trajectory &trajectory)
     {
         reset_moves();
-        for (const Waypoint& wp : trajectory) {
+        for (Waypoint& wp : trajectory) {
             append_segment(wp.acc_angle, wp.time);
         }
         find_roots();

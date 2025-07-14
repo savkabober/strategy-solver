@@ -12,35 +12,48 @@ using namespace std;
 
 int main()
 {
-    time();
-    Point ally_poses[MAX_ROBOT_COUNT], enemy_poses[MAX_ROBOT_COUNT];
+    // Point ally_poses[MAX_ROBOT_COUNT], enemy_poses[MAX_ROBOT_COUNT];
 
-    double ally_angles[MAX_ROBOT_COUNT], enemy_angles[MAX_ROBOT_COUNT], metrics;
+    // double ally_angles[MAX_ROBOT_COUNT], enemy_angles[MAX_ROBOT_COUNT], metrics;
 
-    Field field(-1);
+    // Field field(-1);
 
-    FindWay moving;
+    // FindWay moving;
 
-    for (int i = 0; i < MAX_ROBOT_COUNT; i++) {
-        ally_poses[i] = GRAVEYARD_POS;
-        ally_angles[i] = 0;
-        enemy_poses[i] = GRAVEYARD_POS;
-        enemy_angles[i] = 0;
-    }
+    // for (int i = 0; i < MAX_ROBOT_COUNT; i++) {
+    //     ally_poses[i] = GRAVEYARD_POS;
+    //     ally_angles[i] = 0;
+    //     enemy_poses[i] = GRAVEYARD_POS;
+    //     enemy_angles[i] = 0;
+    // }
 
-    ally_poses[0] = Point(0, 0);
-    ally_poses[1] = Point(-150, 300);
-    ally_poses[2] = Point(50, 300);
-    ally_poses[3] = Point(-50, 500);
-    ally_poses[4] = Point(-50, 700);
+    // ally_poses[0] = Point(0, 0);
+    // ally_poses[1] = Point(-150, 300);
+    // ally_poses[2] = Point(50, 300);
+    // ally_poses[3] = Point(-50, 500);
 
-    field.update_all(ally_poses, ally_angles, enemy_poses, enemy_angles, Point(0, 0), time());
+    // field.update_all(ally_poses, ally_angles, enemy_poses, enemy_angles, Point(0, 0), time());
 
-    moving.reset_config(field, field.allies[0], Point(0, 2000), Point(500, 0), false);
+    // moving.reset_config(field, field.allies[0], Point(0, 2000), Point(500, 0), false);
 
-    Trajectory trajectory;
-    trajectory.push_back(Waypoint(M_PI / 2.0, 1.0));
+    // Trajectory trajectory;
+    // trajectory.push_back(Waypoint(M_PI / 2.0, 1.0));
     
-    moving.evaluate(trajectory);
+    // moving.estimate(trajectory);
+    double st, en;
+    complex<double> roots_[4];
+    double roots[4];
+    st = time();
+    for(int i = 0; i < 1000000; i++) {
+        solve_four(1, 2, 3, 4, 5, roots_);
+    }
+    en = time();
+    cout << (en - st) << endl;
+    st = time();
+    for(int i = 0; i < 1000000; i++) {
+        solve_two(1, 2, 0, roots);
+    }
+    en = time();
+    cout << (en - st) << endl;
     return 0;
 }

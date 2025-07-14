@@ -3,7 +3,7 @@ TARGET = app
 
 # Компилятор и флаги
 CXX = g++
-CXXFLAGS = -Wall -std=c++17
+CXXFLAGS = -Wall -o3 -std=c++17
 
 # SFML библиотеки
 LIBS = -lsfml-graphics -lsfml-window -lsfml-system
