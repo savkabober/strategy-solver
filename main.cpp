@@ -40,20 +40,28 @@ int main()
     // trajectory.push_back(Waypoint(M_PI / 2.0, 1.0));
     
     // moving.estimate(trajectory);
-    double st, en;
+    int n;
+    long double st, en;
     complex<double> roots_[4];
-    double roots[4];
+    double roots[8];
+    // st = time();
+    // for(int i = 0; i < 1000000; i++) {
+    //     solve_four(1, 2, 3, 4, 5, roots_);
+    // }
+    // en = time();
+    // cout << (en - st) << endl;
     st = time();
-    for(int i = 0; i < 1000000; i++) {
-        solve_four(1, 2, 3, 4, 5, roots_);
+    for(int i = 0; i < 10000000; i++) {
+        n = solve_three(1, 2, 1, 0, roots);
     }
     en = time();
-    cout << (en - st) << endl;
-    st = time();
-    for(int i = 0; i < 1000000; i++) {
-        solve_two(1, 2, 0, roots);
+    cout << (en - st) / 10 << endl;
+    for (int i = 0; i < n; i++) {
+        cout << transform(roots, i) << endl;
     }
-    en = time();
-    cout << (en - st) << endl;
+    n = solve_three(1, 2, 1, 0, roots_);
+    for (int i = 0; i < n; i++) {
+        cout << roots_[i] << endl;
+    }
     return 0;
 }

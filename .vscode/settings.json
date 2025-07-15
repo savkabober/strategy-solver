@@ -38,6 +38,7 @@
         "string": "cpp",
         "chrono": "cpp",
         "iosfwd": "cpp",
-        "iostream": "cpp"
+        "iostream": "cpp",
+        "numbers": "cpp"
     }
 }

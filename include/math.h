@@ -282,6 +282,11 @@ ostream &operator<<(ostream &os, const Point &point)
 
 const Point GRAVEYARD_POS = Point(GRAVEYARD_POS_X, 0);
 
+complex<double> transform(double *comp, int n)
+{
+    return complex<double>(comp[2 * n], comp[2 * n + 1]);
+}
+
 class Object
 {
 public:
@@ -450,7 +455,8 @@ inline int solve_one(double a, double b, complex<double> *out)
     return 1;
 }
 
-inline int solve_one(double a, double b, double *out) {
+inline int solve_one(double a, double b, double *out)
+{
     if (a == 0)
         return 0;
     out[0] = -b / a;
@@ -464,7 +470,8 @@ inline int solve_two(double a, double b, double c, complex<double> *out)
         return solve_one(b, c, out);
     }
     complex<double> D(b * b - 4 * a * c, 0);
-    if (abs(D) < EPSILON) {
+    if (abs(D) < EPSILON)
+    {
         out[0] = -b / (2 * a);
         return 1;
     }
@@ -473,19 +480,29 @@ inline int solve_two(double a, double b, double c, complex<double> *out)
     return 2;
 }
 
-inline int solve_two(double a, double b, double c, double *out) {
+inline int solve_two(double a, double b, double c, double *out)
+{
     if (a == 0)
         return solve_one(b, c, out);
-    double D = b * b - 4 * a * c;
-    if (D < -EPSILON) {
-        return 0;
+    double D = b * b - 4 * a * c, sqr, a2 = 2 * a;
+    if (D < -EPSILON)
+    {
+        sqr = sqrt(-D);
+        out[0] = out[2] = -b / a2;
+        out[1] = sqr / a2;
+        out[3] = -sqr / a2;
+        return 2;
     }
-    if (D < EPSILON) {
-        out[0] = -b / (2 * a);
+    if (D > EPSILON)
+    {
+        sqr = sqrt(D);
+        out[0] = (-b - sqr) / a2;
+        out[2] = (-b + sqr) / a2;
+        out[1] = out[3] = 0;
         return 1;
     }
-    out[0] = (-b - sqrt(D)) / (2 * a);
-    out[1] = (-b + sqrt(D)) / (2 * a);
+    out[0] = -b / a2;
+    out[1] = 0;
     return 2;
 }
 
@@ -501,18 +518,19 @@ inline int solve_three(double a, double b, double c, double d, complex<double> *
         out[0] = -b / (3 * a);
         return 1;
     }
-    complex<double> m = sqrt(complex<double>(D1 * D1 - 4.0 * D0 * D0 * D0, 0)), high, low, e = complex<double>(-1 / 2.0, sqrt(3.0) / 2.0);
+    complex<double> m = sqrt(complex<double>(D1 * D1 - 4.0 * D0 * D0 * D0, 0)), high, low, e = complex<double>(-1.0 / 2, sqrt(3.0) / 2.0);
     if (abs(m) < EPSILON)
     {
-        high = pow(D1, 1 / 3);
-        low = D0 / high;
+        high = pow(complex<double>(D1 / 2, 0), 1.0 / 3);
+        low = complex<double>(D0, 0) / high;
         out[0] = -(b + high * e + low / e) / (3.0 * a);
-        alpha = fmod(arg(low) - arg(high), 2.0 * M_PI);
-        if (abs(alpha) > M_PI)
+        alpha = abs(fmod(arg(low) - arg(high), 2.0 * M_PI));
+        if (alpha > M_PI)
         {
-            alpha -= 2.0 * M_PI * sign(alpha);
+            alpha -= 2.0 * M_PI;
+            alpha *= -1;
         }
-        if (abs(alpha) < M_PI / 4)
+        if (alpha < M_PI / 4)
         {
             out[1] = -(b + high + low) / (3.0 * a);
         }
@@ -537,6 +555,97 @@ inline int solve_three(double a, double b, double c, double d, complex<double> *
     return 3;
 }
 
+inline int solve_three(double a, double b, double c, double d, double *out)
+{
+    if (a == 0)
+    {
+        return solve_two(b, c, d, out);
+    }
+    double D0 = b * b - 3 * a * c, D1 = 2 * b * b * b - 9 * a * b * c + 27 * a * a * d, alpha;
+    if (abs(D0) < EPSILON && abs(D1) < EPSILON)
+    {
+        out[0] = -b / (3 * a);
+        out[1] = 0;
+        return 1;
+    }
+    double m[2], high[2], low[2], pw, sqr, a3 = -3 * a, D1m[2], m2 = D1 * D1 - 4.0 * D0 * D0 * D0, co, si;
+    sqr = sqrt(3) / 2;
+    if (m2 >= 0)
+    {
+        m[0] = sqrt(m2);
+        m[1] = 0;
+    }
+    else
+    {
+        m[0] = 0;
+        m[1] = sqrt(-m2);
+    }
+    if (abs(m[0] + m[1]) < EPSILON)
+    {
+        if (D1 >= 0)
+        {
+            high[0] = pow(D1 / 2, 1.0 / 3);
+            high[1] = 0;
+            low[0] = D0 / high[0];
+            low[1] = 0;
+        }
+        else
+        {
+            pw = pow(-D1 / 2, 1.0 / 3);
+            high[0] = pw / 2;
+            high[1] = pw * sqr;
+            low[0] = D0 / (2.0 * pw);
+            low[1] = -D0 * sqr / pw;
+        }
+        out[0] = (b - high[0] / 2 - high[1] * sqr - low[0] / 2 + low[1] * sqr) / a3;
+        out[1] = (high[0] * sqr - high[1] / 2 - low[0] * sqr - low[1] / 2) / a3;
+
+        alpha = abs(fmod(atan2(low[1], low[0]) - atan2(high[1], high[0]), 2.0 * M_PI));
+
+        if (alpha > M_PI)
+        {
+            alpha -= 2.0 * M_PI;
+            alpha *= -1;
+        }
+        if (alpha < M_PI / 4)
+        {
+            out[2] = (b + high[0] + low[0]) / a3;
+            out[3] = (high[1] + low[1]) / a3;
+        }
+        else
+        {
+            out[2] = (b - high[0] / 2 + high[1] * sqr - low[0] / 2 - low[1] * sqr) / a3;
+            out[3] = (-high[0] * sqr - high[1] / 2 + low[0] * sqr - low[1] / 2) / a3;
+        }
+        return 2;
+    }
+    if (abs(D1 - m[0]) > abs(D1 + m[0]))
+    {
+        D1m[0] = (D1 - m[0]) / 2;
+        D1m[1] = -m[1] / 2;
+    }
+    else
+    {
+        D1m[0] = (D1 + m[0]) / 2;
+        D1m[1] = m[1] / 2;
+    }
+    alpha = atan2(D1m[1], D1m[0]) / 3;
+    pw = pow(sqrt(SQUARE(D1m[0]) + SQUARE(D1m[1])), 1.0 / 3.0);
+    co = cos(alpha);
+    si = sin(alpha);
+    high[0] = pw * co;
+    high[1] = pw * si;
+    low[0] = D0 * co / pw;
+    low[1] = -D0 * si / pw;
+    out[0] = (b + high[0] + low[0]) / a3;
+    out[1] = (high[1] + low[1]) / a3;
+    out[2] = (b - high[0] / 2 - high[1] * sqr - low[0] / 2 + low[1] * sqr) / a3;
+    out[3] = (high[0] * sqr - high[1] / 2 - low[0] * sqr - low[1] / 2) / a3;
+    out[4] = (b - high[0] / 2 + high[1] * sqr - low[0] / 2 - low[1] * sqr) / a3;
+    out[5] = (-high[0] * sqr - high[1] / 2 + low[0] * sqr - low[1] / 2) / a3;
+    return 3;
+}
+
 inline int solve_four(double a, double b, double c, double d, double e, complex<double> *out)
 {
     if (a == 0)
@@ -548,7 +657,8 @@ inline int solve_four(double a, double b, double c, double d, double e, complex<
     d /= a;
     e /= a;
     double p = (8.0 * c - 3.0 * b * b) / 8.0, q = (b * b * b - 4.0 * b * c + 8.0 * d) / 8.0, r = (-3.0 * b * b * b * b + 256.0 * e - 64.0 * b * d + 16.0 * b * b * c) / 256.0;
-    int i, n = solve_three(8.0, 8.0 * p, 2.0 * p * p - 8.0 * r, -q * q, out);;
+    int i, n = solve_three(8.0, 8.0 * p, 2.0 * p * p - 8.0 * r, -q * q, out);
+    ;
     complex<double> m(0, 0), k, h, l1, l2;
     for (i = 0; i < n; i++)
     {
